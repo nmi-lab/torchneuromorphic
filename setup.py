@@ -25,7 +25,7 @@ setup(
     long_description=long_description,
     license='Apache License 2.0',
     install_requires=[
-        "torch>=0.4",
+        "torch>=1.1.0",
         "scipy>=1.0",
         "h5py"
     ]

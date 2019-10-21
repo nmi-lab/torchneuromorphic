@@ -35,7 +35,8 @@ class NTIdigitsDataset(torch.utils.data.Dataset):
         #T = np.minimum(tm[-1]//self.dt,self.max_duration)
         T = self.max_duration
         sample = frame_evs(tm, ad, duration=T, downsample=[self.ds], size=self.size, deltat=self.dt)
-        learn_mask = np.convolve(np.ones(30)/30,sample.reshape(-1,self.size[0]).sum(axis=1),mode='same')>.1
+        #learn_mask = np.convolve(np.ones(100)/100,sample.reshape(-1,self.size[0]).sum(axis=1))[:T]>1e-3
+        learn_mask = sample.reshape(-1,self.size[0]).sum(axis=1)>0
         targets = np.ones(T)*11
         targets[learn_mask] = self.labels[key]
         return np.array(sample, dtype='float32'), one_hot(targets, self.nclasses+1)[:,:self.nclasses].astype('float32')
