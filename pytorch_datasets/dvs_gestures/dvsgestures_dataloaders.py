@@ -9,11 +9,14 @@
 # Licence : Apache License, Version 2.0
 #-----------------------------------------------------------------------------
 import struct
+import time
 import numpy as np
 import scipy.misc
 import h5py
-import glob
+import torch.utils.data
+from ..neuromorphic_dataset import NeuromorphicDataset 
 from ..events_timeslices import *
+from ..transforms import *
 import os
 
 mapping = { 0 :'Hand Clapping'  ,
@@ -28,264 +31,143 @@ mapping = { 0 :'Hand Clapping'  ,
             9 :'Air Guitar'     ,
             10:'Other'}
 
-class SequenceGenerator(object):
-    def __init__(self,
-        filename = 'data/dvs_gestures_events.hdf5',
-        group = 'train',
-        batch_size = 32,
-        chunk_size = 500,
-        ds = 2,
-        size = [2, 64, 64],
-        dt = 1000):
+class DVSGestureDataset(NeuromorphicDataset):
 
-        self.group = group
+    def __init__(
+            self, 
+            root,
+            train=True,
+            transform=None,
+            target_transform=None,
+            ds = 2,
+            size = [2, 64, 64],
+            dt=1000, #transform
+            download=False,
+            batch_size = 72, 
+            chunk_size = 500):
+        super(DVSGestureDataset, self).__init__(
+                root,
+                transform=transform,
+                target_transform=target_transform )
+
+
+        if download:
+            self.download()
+
+        self.root = root
+
+        self.train = train 
         self.dt = dt
         self.ds = ds
         self.size = size
-        f = h5py.File(filename, 'r', swmr=True, libver="latest")
-        self.stats = f['stats']
-        self.grp1 = f[group]
         self.num_classes = 11
         self.batch_size = batch_size
         self.chunk_size = chunk_size
 
-    def reset(self):
-        self.i = 0
 
-    def next(self, offset = 0):
-        if self.group != 'test':
-            dat,lab = next(
-                    self.grp1,
-                    stats = self.stats,
-                    batch_size = self.batch_size,
+        with h5py.File(root, 'r', swmr=True, libver="latest") as f:
+            if train:
+                self.n = f['extra'].attrs['Ntrain']
+                self.keys = f['extra']['train_keys']
+            else:
+                self.n = f['extra'].attrs['Ntest']
+                self.keys = f['extra']['test_keys']
+
+    def download(self):
+        raise NotImplementedError()
+
+    def __len__(self):
+        return self.n
+        
+    def __getitem__(self, key):
+        #Important to open and close in getitem to enable num_workers>0
+        with h5py.File(self.root, 'r', swmr=True, libver="latest") as f:
+            if not self.train:
+                key = key + f['extra'].attrs['Ntrain']
+            data, target = sample(
+                    f,
+                    key,
                     T = self.chunk_size,
                     n_classes = self.num_classes,
                     size = self.size,
                     ds = self.ds,
                     dt = self.dt)
-        else:
-            dat,lab = next_1ofeach(
-                    self.grp1,
-                    T = self.chunk_size,
-                    n_classes = self.num_classes,
-                    size = self.size,
-                    ds = self.ds,
-                    dt = self.dt,
-                    offset = offset)
 
-        return dat, lab
+        if self.transform is not None:
+            data = self.transform(data)
 
-def gather_gestures_stats(hdf5_grp):
-    from collections import Counter
-    labels = []
-    for d in hdf5_grp:
-        labels += hdf5_grp[d]['labels'][:,0].tolist()
-    count = Counter(labels)
-    stats = np.array(list(count.values()))
-    stats = stats/ stats.sum()
-    return stats
+        if self.target_transform is not None:
+            target = self.target_transform(target)
 
-def gather_aedat(directory, start_id, end_id, filename_prefix = 'user'):
-    if not os.path.isdir(directory):
-        raise FileNotFoundError("DVS Gestures Dataset not found, looked at: {}".format(directory))
-    import glob
-    fns = []
-    for i in range(start_id,end_id):
-        search_mask = directory+'/'+filename_prefix+"{0:02d}".format(i)+'*.aedat'
-        glob_out = glob.glob(search_mask)
-        if len(glob_out)>0:
-            fns+=glob_out
-    return fns
+        return data, target
 
-def aedat_to_events(filename):
-    label_filename = filename[:-6] +'_labels.csv'
-    labels = np.loadtxt(label_filename, skiprows=1, delimiter=',',dtype='uint32')
-    events=[]
-    with open(filename, 'rb') as f:
-        for i in range(5):
-            f.readline()
-        while True:
-            data_ev_head = f.read(28)
-            if len(data_ev_head)==0: break
-
-            eventtype = struct.unpack('H', data_ev_head[0:2])[0]
-            eventsource = struct.unpack('H', data_ev_head[2:4])[0]
-            eventsize = struct.unpack('I', data_ev_head[4:8])[0]
-            eventoffset = struct.unpack('I', data_ev_head[8:12])[0]
-            eventtsoverflow = struct.unpack('I', data_ev_head[12:16])[0]
-            eventcapacity = struct.unpack('I', data_ev_head[16:20])[0]
-            eventnumber = struct.unpack('I', data_ev_head[20:24])[0]
-            eventvalid = struct.unpack('I', data_ev_head[24:28])[0]
-
-            if(eventtype == 1):
-                event_bytes = np.frombuffer(f.read(eventnumber*eventsize), 'uint32')
-                event_bytes = event_bytes.reshape(-1,2)
-
-                x = (event_bytes[:,0] >> 17) & 0x00001FFF
-                y = (event_bytes[:,0] >> 2 ) & 0x00001FFF
-                p = (event_bytes[:,0] >> 1 ) & 0x00000001
-                t = event_bytes[:,1]
-                events.append([t,x,y,p])
-
-            else:
-                f.read(eventnumber*eventsize)
-    events = np.column_stack(events)
-    events = events.astype('uint32')
-    clipped_events = np.zeros([4,0],'uint32')
-    for l in labels:
-        start = np.searchsorted(events[0,:], l[1])
-        end = np.searchsorted(events[0,:], l[2])
-        clipped_events = np.column_stack([clipped_events,events[:,start:end]])
-    return clipped_events.T, labels
-
-def compute_start_time(labels,pad):
-    l0 = np.arange(len(labels[:,0]), dtype='int')
-    np.random.shuffle(l0)
-    label = labels[l0[0],0]
-    tbegin = labels[l0[0],1]
-    tend = labels[l0[0],2]-pad
+def sample(hdf5_file,
+        key,
+        T = 500,
+        n_classes = 11,
+        ds = 2,
+        size = [2, 64, 64],
+        dt = 1000):
+    label1h = np.zeros(n_classes, dtype='float32')
+    data = np.empty([T]+size, dtype='float32')
+    dset = hdf5_file['data'][str(key)]
+    label1h[dset['labels'][()]-1]=1
+    tbegin = np.maximum(0,dset['times'][0]- 2*T*dt)
+    tend = dset['times'][-1] 
     start_time = np.random.randint(tbegin, tend)
-    return start_time, label
+    data = get_event_slice(dset['times'][()], dset['addrs'][()], start_time, T, ds=ds, size=size, dt=dt)
 
-def next(hdf5_group, stats, batch_size = 32, T = 500, n_classes = 11, ds = 2, size = [2, 64, 64], dt = 1000):
-    batch = np.empty([batch_size,T]+size, dtype='float')
-    batch_idx = np.arange(len(hdf5_group), dtype='int')
-    np.random.shuffle(batch_idx)
-    batch_idx = batch_idx[:batch_size]
-    batch_idx_l = np.empty(batch_size, dtype= 'int')
-    for i, b in (enumerate(batch_idx)):
-        dset = hdf5_group[str(b)]
-        labels = dset['labels'].value
-        cand_batch = -1
-        while cand_batch is -1: #catches some mislabeled data
-            start_time, label = compute_start_time(labels, pad = 2*T*dt)
-            batch_idx_l[i] = label-1
-            #print(str(i),str(b),mapping[batch_idx_l[i]], start_time)
-            cand_batch = get_event_slice(dset['time'].value, dset['data'], start_time, T, ds=ds, size=size, dt=dt)
-        batch[i] = cand_batch
+    return data, label1h 
 
-    #print(batch_idx_l)
-    return batch, one_hot(batch_idx_l, n_classes).astype('float')
+ 
+def create_dataloader(
+        root = 'data/DvsGesture/dvs_gestures_build19.hdf5',
+        batch_size = 72 ,
+        chunk_size_train = 500,
+        chunk_size_test = 1800,
+        size = [2, 32, 32],
+        ds = 4,
+        dt = 1000,
+        transform = None,
+        target_transform_train = None,
+        target_transform_test = None,
+        **dl_kwargs):
 
-def next_1ofeach(hdf5_group, T = 500, n_classes = 11, ds = 2, size = [2, 64, 64], dt = 1000, offset = 0):
-    batch_1of_each = {k:range(len(v['labels'].value)) for k,v in hdf5_group.items()}
-    batch_size = np.sum([len(v) for v in batch_1of_each.values()]).astype(int)
-    batch = np.empty([batch_size,T]+size, dtype='float')
-    batch_idx_l = np.empty(batch_size, dtype= 'int')
-    i = 0
-    for b,v in batch_1of_each.items():
-        for l0 in v:
-            dset = hdf5_group[str(b)]
-            labels = dset['labels'].value
-            label = labels[l0,0]
-            batch_idx_l[i] = label-1
-            start_time = labels[l0,1] + offset*dt
-            #print(str(i),str(b),mapping[batch_idx_l[i]], start_time)
-            batch[i] = get_event_slice(dset['time'].value, dset['data'], start_time, T, ds=ds, size=size, dt=dt)
-            i += 1
-    return batch, one_hot(batch_idx_l, n_classes).astype('float')
+    if not os.path.isfile(root):
+        raise Exception("File {} does not exist".format(root))
 
+    if transform is None:
+        transform = ToTensor()
+    if target_transform_train is None:
+        target_transform_train = Repeat(chunk_size_train)
+    if target_transform_test is None:
+        target_transform_test = Repeat(chunk_size_test)
 
+    train_d = DVSGestureDataset(root,
+                                train=True,
+                                transform = transform, 
+                                target_transform = target_transform_train, 
+                                ds = ds,
+                                size = size,
+                                dt = dt,
+                                batch_size=batch_size,
+                                chunk_size = chunk_size_train)
 
-def create_events_hdf5(hdf5_filename):
-    fns_train = gather_aedat(hdf5_filename,1,24)
-    fns_test = gather_aedat (hdf5_filename,24,30)
+    train_dl = torch.utils.data.DataLoader(train_d, batch_size=batch_size, **dl_kwargs)
 
-    with h5py.File(hdf5_filename, 'w') as f:
-        f.clear()
+    test_d = DVSGestureDataset(root,
+                               transform = transform, 
+                               target_transform = target_transform_test, 
+                               train=False,
+                               ds = ds,
+                               size = size,
+                               dt = dt,
+                               batch_size=batch_size,
+                               chunk_size = chunk_size_test)
 
-        print("processing training data...")
-        key = 0
-        train_grp = f.create_group('train')
-        for file_d in fns_train:
-            print(key)
-            events, labels = aedat_to_events(file_d)
-            subgrp = train_grp.create_group(str(key))
-            dset_dt = subgrp.create_dataset('time', events[:,0].shape, dtype=np.uint32)
-            dset_da = subgrp.create_dataset('data', events[:,1:].shape, dtype=np.uint8)
-            dset_dt[...] = events[:,0]
-            dset_da[...] = events[:,1:]
-            dset_l = subgrp.create_dataset('labels', labels.shape, dtype=np.uint32)
-            dset_l[...] = labels
-            key += 1
+    test_dl = torch.utils.data.DataLoader(test_d, batch_size=batch_size, **dl_kwargs)
 
-        print("processing testing data...")
-        key = 0
-        test_grp = f.create_group('test')
-        for file_d in fns_test:
-            print(key)
-            events, labels = aedat_to_events(file_d)
-            subgrp = test_grp.create_group(str(key))
-            dset_dt = subgrp.create_dataset('time', events[:,0].shape, dtype=np.uint32)
-            dset_da = subgrp.create_dataset('data', events[:,1:].shape, dtype=np.uint8)
-            dset_dt[...] = events[:,0]
-            dset_da[...] = events[:,1:]
-            dset_l = subgrp.create_dataset('labels', labels.shape, dtype=np.uint32)
-            dset_l[...] = labels
-            key += 1
-
-        stats =  gather_gestures_stats(train_grp)
-        f.create_dataset('stats',stats.shape, dtype = stats.dtype)
-        f['stats'][:] = stats
-
-def create_data(filename = 'data/dvs_gestures_events.hdf5', batch_size = 64 , chunk_size_train = 500, chunk_size_test = 500, size = [2, 32, 32], ds = 4, dt = 1000):
-    if not os.path.isfile(filename):
-        print("File {} does not exist: converting DvsGesture to h5file".format(filename))
-        create_events_hdf5(filename)
-    else:
-        print("File {} exists: not re-converting DvsGesture".format(filename))
-
-    strain = SequenceGenerator(filename, group='train', batch_size = batch_size, chunk_size = chunk_size_train, size = size, ds = ds, dt= dt)
-    stest = SequenceGenerator(filename, group='test', batch_size = batch_size, chunk_size = chunk_size_test, size = size, ds = ds, dt= dt)
-    return strain, stest
-
-def plot_gestures_imshow(images, labels, nim=11, avg=50, do1h = True, transpose=False):
-    import pylab as plt
-    plt.figure(figsize = [nim+2,16])
-    import matplotlib.gridspec as gridspec
-    if not transpose:
-        gs = gridspec.GridSpec(images.shape[1]//avg, nim)
-    else:
-        gs = gridspec.GridSpec(nim, images.shape[1]//avg)
-    plt.subplots_adjust(left=0, bottom=0, right=1, top=0.95, wspace=.0, hspace=.04)
-    if do1h:
-        categories = labels.argmax(axis=1)
-    else:
-        categories = labels
-    s=[]
-    for j in range(nim):
-         for i in range(images.shape[1]//avg):
-             if not transpose:
-                 ax = plt.subplot(gs[i, j])
-             else:
-                 ax = plt.subplot(gs[j, i])
-             plt.imshow(images[j,i*avg:(i*avg+avg),0,:,:].sum(axis=0).T)
-             plt.xticks([])
-             if i==0:  plt.title(mapping[labels[0,j].argmax()], fontsize=10)
-             plt.yticks([])
-             plt.gray()
-         s.append(images[j].sum())
-    print(s)
-    #return images,labels
+    return train_dl, test_dl
 
 
 
-    #pass
-
-if __name__ == '__main__':
-    gen_train, gen_test = create_data(chunk_size_train=10, chunk_size_test=20, batch_size=50, size=[2, 128, 128], dt = 50000, ds =1)
-    data_batch, target_batch = gen_train.next()
-    import matplotlib.pyplot as plt
-    from tqdm import tqdm
-
-    im = None
-    for b in tqdm(data_batch):
-        for d in b:
-            if im is None:
-                im = plt.imshow(d[0] - d[1])
-            else:
-                im.set_data(d[0] - d[1])
-                im.autoscale()
-            plt.pause(0.01)
-            plt.draw()
-        pass

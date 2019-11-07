@@ -59,6 +59,14 @@ def get_binary_frame_np(arr, evs, ds_w=1, ds_h=1):
 def get_binary_frame(arr, evs, ds_w=1, ds_h=1):
     x_coords, y_coords = get_subsampled_coordinates(evs, ds_h, ds_w)
     arr[x_coords, y_coords] = 1
+
+def get_slice(times, addrs, start_time, end_time):
+    try:
+        idx_beg = find_first(times, start_time)
+        idx_end = find_first(times[idx_beg:], end_time)+idx_beg
+        return times[idx_beg:idx_end]-times[idx_beg], addrs[idx_beg:idx_end]
+    except IndexError:
+        raise IndexError("Empty batch found")
     
 def get_event_slice(times, addrs, start_time, T, size = [128,128], ds = 1, dt = 1000):
     try:
@@ -66,7 +74,7 @@ def get_event_slice(times, addrs, start_time, T, size = [128,128], ds = 1, dt = 
         idx_end = find_first(times[idx_beg:], start_time+T*dt)+idx_beg
         return chunk_evs_pol_dvs(times[idx_beg:idx_end], addrs[idx_beg:idx_end], deltat=dt, chunk_size=T, size = size, ds_w=ds, ds_h=ds)
     except IndexError:
-        raise IndexError("Empty batch found, returning -1")
+        raise IndexError("Empty batch found")
 
 def get_time_surface(evs, invtau=1e-6, size=(346, 260, 2)):
     tr = np.zeros(size, 'int64') - np.inf

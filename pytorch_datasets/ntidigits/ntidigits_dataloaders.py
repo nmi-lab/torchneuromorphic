@@ -16,12 +16,66 @@ def make_infinite(dataloader):
     while True:
         for x in iter(dataloader):
             yield x
+
+def load_tidigit_hdf5(filename, train=True):
+    with h5py.File(filename, 'r', swmr=True, libver="latest") as f:
+        if train:
+            train_evs = []
+            train_labels_isolated = []
+            for tl in f['train_labels']:
+                label_ = tl.decode()
+                label_s = label_.split('-')
+                if len(label_s[-1])==1:
+                    digit = label_s[-1]
+                    if digit is 'o':
+                        digit=10
+                    if digit is 'z':
+                        digit=0
+                    else:
+                        digit=int(digit)
+                    train_labels_isolated.append(digit)
+                    tm = np.int32(f['train_timestamps'][label_][:]*1e6)
+                    ad = np.int32(f['train_addresses'][label_].value)
+                    train_evs.append(np.column_stack([tm,ad]))
+            return train_evs, train_labels_isolated
+
+        else:
+            test_evs = []
+            test_labels_isolated  = []
+            for tl in f['test_labels']:
+                label_ = tl.decode()
+                label_s = label_.split('-')
+                if len(label_s[-1])==1:
+                    digit = label_s[-1]
+                    if digit is 'o':
+                        digit=10
+                    if digit is 'z':
+                        digit=0
+                    else:
+                        digit=int(digit)
+                    test_labels_isolated.append(digit)
+                    tm = np.int32(f['test_timestamps'][label_][:]*1e6)
+                    ad = np.int32(f['test_addresses'][label_].value)
+                    test_evs.append(np.column_stack([tm,ad]))
+            
+            return test_evs, test_labels_isolated
             
 class NTIdigitsDataset(torch.utils.data.Dataset):
     nclasses = 11
     
-    def __init__(self, evs, labels, ds=[1], size=[64], dt=1000, max_duration=1000):
+    def __init__(self, 
+            filename,
+            train=True,
+            ds=[1], #transform
+            size=[64], #transform
+            dt=1000, #transform
+            max_duration=1000, #transform
+            download=False
+            ):
         super(NTIdigitsDataset).__init__()
+        if download:
+            raise NotImplementedError()
+        evs, labels = load_tidigit_hdf5(filename, train=train)
         self.evs = evs
         self.labels = labels
         self.ds = ds
@@ -65,54 +119,12 @@ def create_data(filename = 'data/tidigits/n-tidigits.hdf5',
     if not os.path.isfile(filename):
         raise Exception("File {} does not exist".format(filename))
 
-    f = h5py.File(filename, 'r', swmr=True, libver="latest")
-    #strain = SequenceGenerator(filename, group='train', batch_size = batch_size, chunk_size = seq_len_train, size = size, ds = ds, dt= dt)
-    #stest = SequenceGenerator(filename, group='test', batch_size = batch_size, chunk_size =seq_len_test, size = size, ds = ds, dt= dt)
-    train_labels_isolated = []
-    test_labels_isolated  = []
-    train_evs = []
-    test_evs = []
-    
-    for tl in f['train_labels']:
-        label_ = tl.decode()
-        label_s = label_.split('-')
-        if len(label_s[-1])==1:
-            digit = label_s[-1]
-            if digit is 'o':
-                digit=10
-            if digit is 'z':
-                digit=0
-            else:
-                digit=int(digit)
-            train_labels_isolated.append(digit)
-            tm = np.int32(f['train_timestamps'][label_][:]*1e6)
-            ad = np.int32(f['train_addresses'][label_].value)
-            train_evs.append(np.column_stack([tm,ad]))
-            
-    for tl in f['test_labels']:
-        label_ = tl.decode()
-        label_s = label_.split('-')
-        if len(label_s[-1])==1:
-            digit = label_s[-1]
-            if digit is 'o':
-                digit=10
-            if digit is 'z':
-                digit=0
-            else:
-                digit=int(digit)
-            test_labels_isolated.append(digit)
-            tm = np.int32(f['test_timestamps'][label_][:]*1e6)
-            ad = np.int32(f['test_addresses'][label_].value)
-            test_evs.append(np.column_stack([tm,ad]))
-    
-    f.close()
-            
-    train_d = NTIdigitsDataset(train_evs, train_labels_isolated, ds = ds, size = size, dt = dt, max_duration = chunk_size_train)
+    train_d = NTIdigitsDataset(filename, train=True, ds = ds, size = size, dt = dt, max_duration = chunk_size_train)
     train_dl = torch.utils.data.DataLoader(train_d,
                                            batch_size=batch_size,
                                            shuffle=True, **dl_kwargs)
     
-    test_d   = NTIdigitsDataset(test_evs, test_labels_isolated, ds = ds, size = size, dt = dt, max_duration = chunk_size_test)
+    test_d   = NTIdigitsDataset(filename, train=False, ds = ds, size = size, dt = dt, max_duration = chunk_size_test)
     test_dl = torch.utils.data.DataLoader( test_d,
                                            batch_size=batch_size,
                                            shuffle=True, **dl_kwargs)
