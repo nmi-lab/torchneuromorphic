@@ -1,23 +1,22 @@
 #!/bin/python
 #-----------------------------------------------------------------------------
-# File Name : test_dvsgestures.py
+# File Name : test_nmnist.py
 # Author: Emre Neftci
 #
-# Creation Date : Fri 19 Sep 2019 
+# Creation Date : Thu Nov  7 20:30:14 2019
 # Last Modified : 
 #
 # Copyright : (c) UC Regents, Emre Neftci
-# Licence : GPLv3
+# Licence : GPLv2
 #----------------------------------------------------------------------------- 
-from pytorch_datasets.dvs_gestures.dvsgestures_dataloaders import *
+from pytorch_datasets.nmnist.nmnist_dataloaders import *
 from pytorch_datasets.utils import plot_frames_imshow
-import pytorch_datasets.transforms as transforms
 
 if __name__ == "__main__":
     train_dl, test_dl = create_dataloader(
-            root='data/DvsGesture/dvs_gestures_build19.hdf5',
+            root='data/N-MNIST/n_mnist.hdf5',
             batch_size=32,
-            ds=2,
-            num_workers=2)
-    ho = iter(test_dl)
+            ds=1,
+            num_workers=0)
+    ho = iter(train_dl)
     frames, labels = next(ho)

@@ -174,8 +174,7 @@ def plot_frames_imshow(images, labels, nim=11, avg=50, do1h = True, transpose=Fa
              plt.xticks([])
              
              if i==0 and label_mapping is not None:
-                 plt.title(label_mapping[categories[j]], fontsize=10)
-                 print(categories[j])
+                 plt.title(label_mapping[int(categories[j])], fontsize=10)
              plt.yticks([])
              plt.gray()
          s.append(images[j].sum())

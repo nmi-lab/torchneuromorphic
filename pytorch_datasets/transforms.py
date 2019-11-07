@@ -10,11 +10,20 @@
 # Licence : GPLv2
 #----------------------------------------------------------------------------- 
 import numpy as np
-import torch
+import torch, bisect
 from torchvision.transforms import Compose,ToTensor,Normalize,Lambda
 
 def find_first(a, tgt):
     return bisect.bisect_left(a, tgt)
+
+class toOneHot(object):
+    def __init__(self, num_classes):
+        self.num_classes = num_classes
+
+    def __call__(self, integers):
+        y_onehot = torch.FloatTensor(integers.shape[0], self.num_classes)
+        y_onehot.zero_()
+        return y_onehot.scatter_(1, torch.LongTensor(integers), 1)
 
 class Downsample(object):
     """Resize the address event Tensor to the given size.
@@ -23,12 +32,11 @@ class Downsample(object):
         factor: : Desired resize factor. Applied to all dimensions including time
     """
     def __init__(self, factor):
-        assert isinstance(size, int) or (isinstance(size, Iterable))
+        assert isinstance(factor, int) or hasattr(factor, '__iter__')
         self.factor = factor
-        self.interpolation = interpolation
 
     def __call__(self, tmad):
-        return tmad//s
+        return tmad//self.factor
 
     def __repr__(self):
         return self.__class__.__name__ + '()'
@@ -51,17 +59,18 @@ class Crop(object):
     def __repr__(self):
         return self.__class__.__name__ + '()'
 
-class CropDim(object):
-    def __init__(self, low_crop, high_crop, dim):
-        self.low = low_crop
-        self.high = high_crop
-        self.dim = dim
+class CropDims(object):
+    def __init__(self, low_crop, high_crop, dims):
+        self.low_crop = low_crop
+        self.high_crop = high_crop
+        self.dims = dims
 
     def __call__(self, tmad):
-        idx = np.where(tmad[:,self.dim]>high_crop)
-        tmad = np.delete(tmad,idx,0)
-        idx = np.where(tmad[:,self.dim]<low_crop)
-        tmad = np.delete(tmad,idx,0)
+        for i, d in enumerate(self.dims):
+            idx = np.where(tmad[:,d]>self.high_crop[i])
+            tmad = np.delete(tmad,idx,0)
+            idx = np.where(tmad[:,d]<self.low_crop[i])
+            tmad = np.delete(tmad,idx,0)
         return tmad
 
     def __repr__(self):
@@ -72,9 +81,9 @@ class ToCountFrame(object):
 
     Converts a numpy.ndarray (T x H x W x C) to a torch.FloatTensor of shape (T x C x H x W) in the range [0., 1., ...] 
     """
-    def __init__(self, size=[2, 32, 32],deltat=1000):
+    def __init__(self, T=500, size=[2, 32, 32]):
+        self.T = T
         self.size = size
-        self.dt = deltat
 
     def __call__(self, tmad):
         times = tmad[:,0]
@@ -82,7 +91,7 @@ class ToCountFrame(object):
         t_end = times[-1]
         addrs = tmad[:,1:]
 
-        ts = range(t_start, t_start-t_end, self.dt)
+        ts = range(0, self.T)
         chunks = np.zeros([len(ts)] + self.size, dtype='int8')
         idx_start = 0
         idx_end = 0
@@ -90,10 +99,10 @@ class ToCountFrame(object):
             idx_end += find_first(times[idx_end:], t)
             if idx_end > idx_start:
                 ee = addrs[idx_start:idx_end]
-                pol, x, y = ee[:, 2], ee[:, 0], ee[:, 1]
-                np.add.at(chunks, (i, pol, x, y), 1)
+                i_pol_x_y = (i, ee[:, 0], ee[:, 1], ee[:, 2])
+                np.add.at(chunks, i_pol_x_y, 1)
             idx_start = idx_end
-        return torch.Tensor(chunks.astype('float32'))
+        return chunks
 
     def __repr__(self):
         return self.__class__.__name__ + '()'

@@ -76,6 +76,14 @@ def get_event_slice(times, addrs, start_time, T, size = [128,128], ds = 1, dt = 
     except IndexError:
         raise IndexError("Empty batch found")
 
+def get_tmad_slice(times, addrs, start_time, T):
+    try:
+        idx_beg = find_first(times, start_time)
+        idx_end = find_first(times[idx_beg:], start_time+T)+idx_beg
+        return np.column_stack([times[idx_beg:idx_end], addrs[idx_beg:idx_end]])
+    except IndexError:
+        raise IndexError("Empty batch found")
+
 def get_time_surface(evs, invtau=1e-6, size=(346, 260, 2)):
     tr = np.zeros(size, 'int64') - np.inf
 

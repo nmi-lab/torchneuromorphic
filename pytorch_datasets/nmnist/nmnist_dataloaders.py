@@ -19,19 +19,18 @@ from ..events_timeslices import *
 from ..transforms import *
 import os
 
-mapping = { 0 :'Hand Clapping'  ,
-            1 :'Right Hand Wave',
-            2 :'Left Hand Wave' ,
-            3 :'Right Arm CW'   ,
-            4 :'Right Arm CCW'  ,
-            5 :'Left Arm CW'    ,
-            6 :'Left Arm CCW'   ,
-            7 :'Arm Roll'       ,
-            8 :'Air Drums'      ,
-            9 :'Air Guitar'     ,
-            10:'Other'}
+mapping = { 0 :'0',
+            1 :'1',
+            2 :'2',
+            3 :'3',
+            4 :'4',
+            5 :'5',
+            6 :'6',
+            7 :'7',
+            8 :'8',
+            9 :'9'}
 
-class DVSGestureDataset(NeuromorphicDataset):
+class NMNISTDataset(NeuromorphicDataset):
 
     def __init__(
             self, 
@@ -41,7 +40,7 @@ class DVSGestureDataset(NeuromorphicDataset):
             target_transform=None,
             download=False,
             chunk_size = 500):
-        super(DVSGestureDataset, self).__init__(
+        super(NMNISTDataset, self).__init__(
                 root,
                 transform=transform,
                 target_transform=target_transform )
@@ -95,21 +94,19 @@ def sample(hdf5_file,
         shuffle = False):
     dset = hdf5_file['data'][str(key)]
     label = dset['labels'][()]
-    tbegin = np.maximum(0,dset['times'][0]- 2*T*1000)
     tend = dset['times'][-1] 
-    start_time = np.random.randint(tbegin, tend) if shuffle else 0
+    start_time = 0
 
     tmad = get_tmad_slice(dset['times'][()], dset['addrs'][()], start_time, T*1000)
     tmad[:,0]-=tmad[0,0]
-    return tmad[:, [0,3,1,2]], label
+    return tmad, label
 
- 
 def create_dataloader(
-        root = 'data/DvsGesture/dvs_gestures_build19.hdf5',
+        root = 'data/N-MNIST/n_mnist.hdf5',
         batch_size = 72 ,
-        chunk_size_train = 500,
-        chunk_size_test = 1800,
-        ds = 4,
+        chunk_size_train = 300,
+        chunk_size_test = 300,
+        ds = 1,
         dt = 1000,
         transform_train = None,
         transform_test = None,
@@ -117,19 +114,22 @@ def create_dataloader(
         target_transform_test = None,
         **dl_kwargs):
 
-    size = [2, 128//ds, 128//ds]
+    size = [2, 32//ds, 32//ds]
+    print(size)
 
     if not os.path.isfile(root):
         raise Exception("File {} does not exist".format(root))
 
     if transform_train is None:
         transform_train = Compose([
-            Downsample(factor=[dt,1,ds,ds]),
+            CropDims(low_crop=[0,0], high_crop=[31,31], dims=[2,3]),
+            Downsample(factor=[dt,1,1,1]),
             ToCountFrame(T = chunk_size_train, size = size),
             ToTensor()])
     if transform_test is None:
         transform_test = Compose([
-            Downsample(factor=[dt,1,ds,ds]),
+            CropDims(low_crop=[0,0], high_crop=[31,31], dims=[2,3]),
+            Downsample(factor=[dt,1,1,1]),
             ToCountFrame(T = chunk_size_test, size = size),
             ToTensor()])
     if target_transform_train is None:
@@ -137,21 +137,19 @@ def create_dataloader(
     if target_transform_test is None:
         target_transform_test = Compose([Repeat(chunk_size_test), toOneHot(11)])
 
-    train_d = DVSGestureDataset(root,
-                                train=True,
-                                transform = transform_train, 
-                                target_transform = target_transform_train, 
-                                chunk_size = chunk_size_train)
+    train_d = NMNISTDataset(root,train=True,
+                                 transform = transform_train, 
+                                 target_transform = target_transform_train, 
+                                 chunk_size = chunk_size_train)
 
-    train_dl = torch.utils.data.DataLoader(train_d, batch_size=batch_size, **dl_kwargs)
+    train_dl = torch.utils.data.DataLoader(train_d, shuffle=True, batch_size=batch_size, **dl_kwargs)
 
-    test_d = DVSGestureDataset(root,
-                               transform = transform_test, 
-                               target_transform = target_transform_test, 
-                               train=False,
-                               chunk_size = chunk_size_test)
+    test_d = NMNISTDataset(root, transform = transform_test, 
+                                 target_transform = target_transform_test, 
+                                 train=False,
+                                 chunk_size = chunk_size_test)
 
-    test_dl = torch.utils.data.DataLoader(test_d, batch_size=batch_size, **dl_kwargs)
+    test_dl = torch.utils.data.DataLoader(test_d, shuffle=False, batch_size=batch_size, **dl_kwargs)
 
     return train_dl, test_dl
 
