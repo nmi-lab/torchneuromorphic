@@ -32,6 +32,9 @@ mapping = { 0 :'Hand Clapping'  ,
             10:'Other'}
 
 class DVSGestureDataset(NeuromorphicDataset):
+    resources_url = [['Manual Download: https://ibm.ent.box.com/s/3hiq58ww1pbbjrinh367ykfdf60xsfm8/file/211521748942?sb=/details',None, 'DvsGesture.tar.gz']]
+    directory = 'data/dvsgesture/'
+    resources_local = [directory+'raw']
 
     def __init__(
             self, 
@@ -39,22 +42,19 @@ class DVSGestureDataset(NeuromorphicDataset):
             train=True,
             transform=None,
             target_transform=None,
-            download=False,
+            download_and_create=True,
             chunk_size = 500):
+
+        self.n = 0
+        self.download_and_create = download_and_create
+        self.root = root
+        self.train = train 
+        self.chunk_size = chunk_size
+
         super(DVSGestureDataset, self).__init__(
                 root,
                 transform=transform,
                 target_transform=target_transform )
-
-
-        if download:
-            self.download()
-
-        self.root = root
-
-        self.train = train 
-        self.chunk_size = chunk_size
-
 
         with h5py.File(root, 'r', swmr=True, libver="latest") as f:
             if train:
@@ -65,7 +65,10 @@ class DVSGestureDataset(NeuromorphicDataset):
                 self.keys = f['extra']['test_keys']
 
     def download(self):
-        raise NotImplementedError()
+        isexisting = super(DVSGestureDataset, self).download()
+        if not isexisting:
+            from create_hdf5 import create_events_hdf5
+            create_events_hdf5(self.directory, self.root)
 
     def __len__(self):
         return self.n
@@ -118,9 +121,6 @@ def create_dataloader(
         **dl_kwargs):
 
     size = [2, 128//ds, 128//ds]
-
-    if not os.path.isfile(root):
-        raise Exception("File {} does not exist".format(root))
 
     if transform_train is None:
         transform_train = Compose([

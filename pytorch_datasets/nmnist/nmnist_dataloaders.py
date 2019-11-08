@@ -31,6 +31,10 @@ mapping = { 0 :'0',
             9 :'9'}
 
 class NMNISTDataset(NeuromorphicDataset):
+    resources_url = [['https://www.dropbox.com/sh/tg2ljlbmtzygrag/AABlMOuR15ugeOxMCX0Pvoxga/Train.zip?dl=1',None, 'Train.zip'],
+                     ['https://www.dropbox.com/sh/tg2ljlbmtzygrag/AADSKgJ2CjaBWh75HnTNZyhca/Test.zip?dl=1', None, 'Test.zip']]
+    directory = 'data/nmnist/'
+    resources_local = [directory+'Train', directory+'Test']
 
     def __init__(
             self, 
@@ -38,23 +42,20 @@ class NMNISTDataset(NeuromorphicDataset):
             train=True,
             transform=None,
             target_transform=None,
-            download=False,
+            download_and_create=True,
             chunk_size = 500):
+
+        self.n = 0
+        self.download_and_create = download_and_create
+        self.root = root
+        self.train = train 
+        self.chunk_size = chunk_size
+
         super(NMNISTDataset, self).__init__(
                 root,
                 transform=transform,
                 target_transform=target_transform )
-
-
-        if download:
-            self.download()
-
-        self.root = root
-
-        self.train = train 
-        self.chunk_size = chunk_size
-
-
+        
         with h5py.File(root, 'r', swmr=True, libver="latest") as f:
             if train:
                 self.n = f['extra'].attrs['Ntrain']
@@ -64,7 +65,11 @@ class NMNISTDataset(NeuromorphicDataset):
                 self.keys = f['extra']['test_keys']
 
     def download(self):
-        raise NotImplementedError()
+        isexisting = super(NMNISTDataset, self).download()
+        if not isexisting:
+            from create_nmnist import create_events_hdf5
+            create_events_hdf5(self.directory, self.root)
+
 
     def __len__(self):
         return self.n
@@ -116,9 +121,6 @@ def create_dataloader(
 
     size = [2, 32//ds, 32//ds]
     print(size)
-
-    if not os.path.isfile(root):
-        raise Exception("File {} does not exist".format(root))
 
     if transform_train is None:
         transform_train = Compose([

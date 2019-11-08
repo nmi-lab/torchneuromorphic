@@ -14,7 +14,7 @@ from pytorch_datasets.utils import plot_frames_imshow
 
 if __name__ == "__main__":
     train_dl, test_dl = create_dataloader(
-            root='data/N-MNIST/n_mnist.hdf5',
+            root='data/nmnist/n_mnist.hdf5',
             batch_size=32,
             ds=1,
             num_workers=0)
