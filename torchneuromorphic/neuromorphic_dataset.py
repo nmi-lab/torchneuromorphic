@@ -142,7 +142,6 @@ class NeuromorphicDataset(data.Dataset):
 
     def _check_exists(self):
         print(self.resources_local)
-        raise
         return all([os.path.exists(d) for d in self.resources_local])
 
     def download(self):
