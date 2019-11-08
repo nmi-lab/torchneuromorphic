@@ -12,7 +12,7 @@
 from torchneuromorphic.dvs_gestures.create_hdf5 import *
 
 if __name__ == "__main__":
-    out = create_events_hdf5('data/DvsGesture/raw/', 'data/DvsGesture/dvs_gestures_build19.hdf5')
+    out = create_events_hdf5('data/dvsgesture/raw/', 'data/dvsgesture/dvs_gestures_build19.hdf5')
 
 
 

@@ -25,7 +25,7 @@ def create_events_hdf5(directory, hdf5_filename):
     test_keys = []
     train_keys = []
 
-    assert len(fns_train)>100
+    assert len(fns_train)==98
 
     with h5py.File(hdf5_filename, 'w') as f:
         f.clear()
