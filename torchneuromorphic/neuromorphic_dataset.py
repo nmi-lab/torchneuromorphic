@@ -31,6 +31,7 @@ def download_url(url, root, filename=None, md5=None):
         filename = os.path.basename(url)
     fpath = os.path.join(root, filename)
 
+
     makedir_exist_ok(root)
 
     # check if file is already present locally
@@ -78,6 +79,9 @@ def download_and_extract_archive(url, download_root, extract_root=None, filename
     if not filename:
         filename = os.path.basename(url)
 
+    
+    fpath = os.path.join(download_root, filename)
+    if os.path.exists(fpath): return
     download_url(url, download_root, filename, md5)
 
     archive = os.path.join(download_root, filename)
@@ -147,7 +151,6 @@ class NeuromorphicDataset(data.Dataset):
             print('The following files did not exist, will attempt download:')
             for i,r in enumerate(res_):
                 if not r: print(self.resources_local[i])
-        return res
 
 
     def download(self):
