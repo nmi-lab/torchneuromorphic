@@ -142,7 +142,8 @@ class NeuromorphicDataset(data.Dataset):
 
     def _check_exists(self):
         print(self.resources_local)
-        return all([os.path.exists(os.path.join(self.directory, d)) for d in self.resources_local])
+        raise
+        return all([os.path.exists(d) for d in self.resources_local])
 
     def download(self):
         if self._check_exists():
@@ -151,7 +152,7 @@ class NeuromorphicDataset(data.Dataset):
             makedir_exist_ok(self.directory)
             for url, md5, filename in self.resources_url:
                 download_and_extract_archive(url, download_root=self.directory, filename=filename, md5=md5)
-        return False
+            return False
 
 
 

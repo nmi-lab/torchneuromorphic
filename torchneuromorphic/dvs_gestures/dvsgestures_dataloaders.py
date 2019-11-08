@@ -48,6 +48,7 @@ class DVSGestureDataset(NeuromorphicDataset):
         self.n = 0
         self.download_and_create = download_and_create
         self.root = root
+        self.resources_local += [self.root]
         self.train = train 
         self.chunk_size = chunk_size
 
@@ -108,7 +109,7 @@ def sample(hdf5_file,
 
  
 def create_dataloader(
-        root = 'data/DvsGesture/dvs_gestures_build19.hdf5',
+        root = 'data/dvsgesture/dvs_gestures_build19.hdf5',
         batch_size = 72 ,
         chunk_size_train = 500,
         chunk_size_test = 1800,

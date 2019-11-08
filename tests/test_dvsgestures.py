@@ -9,8 +9,8 @@
 # Copyright : (c) UC Regents, Emre Neftci
 # Licence : GPLv3
 #----------------------------------------------------------------------------- 
-from torchneurmorphic.dvs_gestures.dvsgestures_dataloaders import *
-from torchneurmorphic.utils import plot_frames_imshow
+from torchneuromorphic.dvs_gestures.dvsgestures_dataloaders import *
+from torchneuromorphic.utils import plot_frames_imshow
 import torchneuromorphic.transforms as transforms
 
 if __name__ == "__main__":
