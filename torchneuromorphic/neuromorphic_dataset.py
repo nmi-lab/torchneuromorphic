@@ -140,12 +140,18 @@ class NeuromorphicDataset(data.Dataset):
     def extra_repr(self):
         return ""
 
-    def _check_exists(self):
-        print(self.resources_local)
-        return all([os.path.exists(d) for d in self.resources_local])
+    def check_exists(self):
+        res_ = [os.path.exists(d) for d in self.resources_local]
+        res = all(res_)
+        if res is False:
+            print('The following files did not exist, will attempt download:')
+            for i,r in enumerate(res_):
+                if not r: print(self.resources_local[i])
+        return res
+
 
     def download(self):
-        if self._check_exists():
+        if self.check_exists():
             return True
         else:
             makedir_exist_ok(self.directory)
