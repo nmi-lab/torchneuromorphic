@@ -149,6 +149,7 @@ class NeuromorphicDataset(data.Dataset):
             print('The following files did not exist, will attempt download:')
             for i,r in enumerate(res_):
                 if not r: print(self.resources_local[i])
+        return res
 
 
     def download(self):
