@@ -9,7 +9,7 @@
 # Copyright : (c) UC Regents, Emre Neftci
 # Licence : GPLv2
 #----------------------------------------------------------------------------- 
-from pytorch_datasets.ntidigits.ntidigits_dataloaders import *
+from torchneuromorphic.ntidigits.ntidigits_dataloaders import *
 
 if __name__ == '__main__':
     train_dl, test_dl = create_data(filename = 'data/tidigits/n-tidigits.hdf5',

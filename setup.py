@@ -1,5 +1,5 @@
 """
-DCLL library
+Torch Neuromorphic
 """
 
 # Always prefer setuptools over distutils
@@ -15,7 +15,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name = "pytorch_datasets",
+    name = "torchneuromorphic",
     version = "0.1",
     author = "Emre Neftci",
     author_email = "eneftci@uci.edu",

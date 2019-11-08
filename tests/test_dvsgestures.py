@@ -9,9 +9,9 @@
 # Copyright : (c) UC Regents, Emre Neftci
 # Licence : GPLv3
 #----------------------------------------------------------------------------- 
-from pytorch_datasets.dvs_gestures.dvsgestures_dataloaders import *
-from pytorch_datasets.utils import plot_frames_imshow
-import pytorch_datasets.transforms as transforms
+from torchneurmorphic.dvs_gestures.dvsgestures_dataloaders import *
+from torchneurmorphic.utils import plot_frames_imshow
+import torchneuromorphic.transforms as transforms
 
 if __name__ == "__main__":
     train_dl, test_dl = create_dataloader(

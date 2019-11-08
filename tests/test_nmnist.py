@@ -9,8 +9,8 @@
 # Copyright : (c) UC Regents, Emre Neftci
 # Licence : GPLv2
 #----------------------------------------------------------------------------- 
-from pytorch_datasets.nmnist.nmnist_dataloaders import *
-from pytorch_datasets.utils import plot_frames_imshow
+from torchneuromorphic.nmnist.nmnist_dataloaders import *
+from torchneuromorphic.utils import plot_frames_imshow
 
 if __name__ == "__main__":
     train_dl, test_dl = create_dataloader(
