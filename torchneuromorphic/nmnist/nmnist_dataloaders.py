@@ -17,6 +17,7 @@ import torch.utils.data
 from ..neuromorphic_dataset import NeuromorphicDataset 
 from ..events_timeslices import *
 from ..transforms import *
+from .create_hdf5 import create_events_hdf5
 import os
 
 mapping = { 0 :'0',
@@ -66,9 +67,9 @@ class NMNISTDataset(NeuromorphicDataset):
 
     def download(self):
         isexisting = super(NMNISTDataset, self).download()
-        if not isexisting:
-            from create_nmnist import create_events_hdf5
-            create_events_hdf5(self.directory, self.root)
+
+    def create_hdf5:
+        create_events_hdf5(self.directory, self.root)
 
 
     def __len__(self):
