@@ -48,7 +48,6 @@ class DVSGestureDataset(NeuromorphicDataset):
         self.n = 0
         self.download_and_create = download_and_create
         self.root = root
-        self.resources_local += [self.root]
         self.train = train 
         self.chunk_size = chunk_size
 
@@ -66,10 +65,11 @@ class DVSGestureDataset(NeuromorphicDataset):
                 self.keys = f['extra']['test_keys']
 
     def download(self):
-        isexisting = super(DVSGestureDataset, self).download()
-        if not isexisting:
-            from create_hdf5 import create_events_hdf5
-            create_events_hdf5(self.directory, self.root)
+        super(DVSGestureDataset, self).download()
+
+    def create_hdf5(self):
+        from create_hdf5 import create_events_hdf5
+        create_events_hdf5(self.directory, self.root)
 
     def __len__(self):
         return self.n

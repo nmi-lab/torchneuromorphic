@@ -79,9 +79,6 @@ def download_and_extract_archive(url, download_root, extract_root=None, filename
     if not filename:
         filename = os.path.basename(url)
 
-    
-    fpath = os.path.join(download_root, filename)
-    if os.path.exists(fpath): return
     download_url(url, download_root, filename, md5)
 
     archive = os.path.join(download_root, filename)
@@ -99,6 +96,7 @@ class NeuromorphicDataset(data.Dataset):
         if not os.path.isfile(root):
             if self.download_and_create:
                 self.download()
+                self.create_hdf5()
             else:
                 raise Exception("File {} does not exist and download_and_create is False".format(root))
 
@@ -161,6 +159,10 @@ class NeuromorphicDataset(data.Dataset):
             for url, md5, filename in self.resources_url:
                 download_and_extract_archive(url, download_root=self.directory, filename=filename, md5=md5)
             return False
+
+    def create_hdf5(self):
+        raise NotImplementedError()
+
 
 
 
