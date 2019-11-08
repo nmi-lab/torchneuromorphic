@@ -14,6 +14,7 @@ import numpy as np
 import scipy.misc
 import h5py
 import torch.utils.data
+import create_hdf5
 from ..neuromorphic_dataset import NeuromorphicDataset 
 from ..events_timeslices import *
 from ..transforms import *
