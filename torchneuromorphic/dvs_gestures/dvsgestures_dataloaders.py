@@ -69,7 +69,7 @@ class DVSGestureDataset(NeuromorphicDataset):
         super(DVSGestureDataset, self).download()
 
     def create_hdf5(self):
-        create_events_hdf5(self.directory, self.root)
+        create_events_hdf5(self.resources_local[0], self.root)
 
     def __len__(self):
         return self.n
