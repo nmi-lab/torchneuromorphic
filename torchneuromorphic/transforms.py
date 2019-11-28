@@ -76,6 +76,22 @@ class CropDims(object):
     def __repr__(self):
         return self.__class__.__name__ + '()'
 
+class ToChannelHeightWidth(object):
+    def __call__(self, tmad):
+        n = tmad.shape[1]
+        if n==2:
+            o = np.zeros(tmad.shape[0], dtype=tmad.dtype)
+            return np.column_stack([tmad, o, o])
+            
+        elif n==4:
+            return tmad
+
+        else:
+            raise TypeError('Wrong number of dimensions. Found {0}, expected 1 or 3'.format(n-1))
+
+    def __repr__(self):
+        return self.__class__.__name__ + '()'
+
 class ToCountFrame(object):
     """Convert Address Events to Binary tensor.
 

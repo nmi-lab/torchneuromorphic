@@ -113,14 +113,15 @@ def create_dataloader(
         batch_size = 72 ,
         chunk_size_train = 500,
         chunk_size_test = 1800,
-        ds = 4,
+        ds = None,
         dt = 1000,
         transform_train = None,
         transform_test = None,
         target_transform_train = None,
         target_transform_test = None,
         **dl_kwargs):
-
+    if ds is None:
+        ds = 4
     size = [2, 128//ds, 128//ds]
 
     if transform_train is None:
