@@ -12,7 +12,7 @@
 import os
 import torch
 import torch.utils.data as data
-from torchvision.datasets.utils import extract_archive, makedir_exist_ok, verify_str_arg, check_integrity
+from torchvision.datasets.utils import extract_archive, makedir_exist_ok, verify_str_arg, check_integrity, gen_bar_updater
 
 DEFAULT_ROOT = 'data/'
 

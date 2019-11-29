@@ -273,11 +273,13 @@ def create_dataloader(
 
     if transform_train is None:
         transform_train = Compose([
+            Downsample(factor=[dt,ds[0]]),
             ToChannelHeightWidth(),
             ToCountFrame(T = chunk_size_train, size = size),
             ToTensor()])
     if transform_test is None:
         transform_test = Compose([
+            Downsample(factor=[dt,ds[0]]),
             ToChannelHeightWidth(),
             ToCountFrame(T = chunk_size_test, size = size),
             ToTensor()])
