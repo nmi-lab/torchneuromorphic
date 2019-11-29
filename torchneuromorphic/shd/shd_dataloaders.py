@@ -172,7 +172,7 @@ def create_dataloader(
         batch_size = 72 ,
         chunk_size_train = 1000,
         chunk_size_test = 1000,
-        ds = [1],
+        ds = 1,
         dt = 500,
         transform_train = None,
         transform_test = None,
@@ -180,18 +180,18 @@ def create_dataloader(
         target_transform_test = None,
         **dl_kwargs):
 
-    size = [700//ds[0], 1, 1]
+    size = [700//ds, 1, 1]
 
     if transform_train is None:
         transform_train = Compose([
-            Downsample(factor=[dt,ds[0]]),
+            Downsample(factor=[dt,ds]),
             ToChannelHeightWidth(),
             ToCountFrame(T = chunk_size_train, size = size),
             ToTensor()
             ])
     if transform_test is None:
         transform_test = Compose([
-            Downsample(factor=[dt,ds[0]]),
+            Downsample(factor=[dt,ds]),
             ToChannelHeightWidth(),
             ToCountFrame(T = chunk_size_test, size = size),
             ToTensor()
