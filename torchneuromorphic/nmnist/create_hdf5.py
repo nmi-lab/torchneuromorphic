@@ -47,8 +47,8 @@ def nmnist_get_file_names(dataset_path):
     # We need the same number of train and test samples for each digit, let's compute the minimum
     max_n_train = min(map(lambda l: len(l), train_files))
     max_n_test = min(map(lambda l: len(l), test_files))
-    n_train = 2000 # we could take max_n_train, but my memory on the shared drive is full
-    n_test = 100 # we test on the whole test set - lets only take 100*10 samples
+    n_train = max_n_train # we could take max_n_train, but my memory on the shared drive is full
+    n_test = max_n_test # we test on the whole test set - lets only take 100*10 samples
     assert((n_train <= max_n_train) and (n_test <= max_n_test)), 'Requested more samples than present in dataset'
 
     print("N-MNIST: {} train samples and {} test samples per digit (max: {} train and {} test)".format(n_train, n_test, max_n_train, max_n_test))

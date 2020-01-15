@@ -217,6 +217,7 @@ def create_dataloader(
                                  chunk_size = chunk_size_test)
 
     test_dl = torch.utils.data.DataLoader(test_d, shuffle=False, batch_size=batch_size, collate_fn = collate_fn,**dl_kwargs)
+    print(dl_kwargs)
                                  
 
     return train_dl, test_dl

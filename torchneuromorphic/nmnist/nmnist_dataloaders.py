@@ -68,7 +68,7 @@ class NMNISTDataset(NeuromorphicDataset):
     def download(self):
         isexisting = super(NMNISTDataset, self).download()
 
-    def create_hdf5:
+    def create_hdf5(self):
         create_events_hdf5(self.directory, self.root)
 
 
@@ -108,7 +108,7 @@ def sample(hdf5_file,
     return tmad, label
 
 def create_dataloader(
-        root = 'data/N-MNIST/n_mnist.hdf5',
+        root = 'data/nmnist/n_mnist.hdf5',
         batch_size = 72 ,
         chunk_size_train = 300,
         chunk_size_test = 300,
@@ -136,9 +136,9 @@ def create_dataloader(
             ToCountFrame(T = chunk_size_test, size = size),
             ToTensor()])
     if target_transform_train is None:
-        target_transform_train =Compose([Repeat(chunk_size_train), toOneHot(11)])
+        target_transform_train =Compose([Repeat(chunk_size_train), toOneHot(10)])
     if target_transform_test is None:
-        target_transform_test = Compose([Repeat(chunk_size_test), toOneHot(11)])
+        target_transform_test = Compose([Repeat(chunk_size_test), toOneHot(10)])
 
     train_d = NMNISTDataset(root,train=True,
                                  transform = transform_train, 
