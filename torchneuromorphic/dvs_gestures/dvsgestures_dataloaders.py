@@ -60,10 +60,10 @@ class DVSGestureDataset(NeuromorphicDataset):
         with h5py.File(root, 'r', swmr=True, libver="latest") as f:
             if train:
                 self.n = f['extra'].attrs['Ntrain']
-                self.keys = f['extra']['train_keys']
+                self.keys = f['extra']['train_keys'][()]
             else:
                 self.n = f['extra'].attrs['Ntest']
-                self.keys = f['extra']['test_keys']
+                self.keys = f['extra']['test_keys'][()]
 
     def download(self):
         super(DVSGestureDataset, self).download()
@@ -79,6 +79,7 @@ class DVSGestureDataset(NeuromorphicDataset):
         with h5py.File(self.root, 'r', swmr=True, libver="latest") as f:
             if not self.train:
                 key = key + f['extra'].attrs['Ntrain']
+            assert key in self.keys
             data, target = sample(
                     f,
                     key,
@@ -99,8 +100,8 @@ def sample(hdf5_file,
         shuffle = False):
     dset = hdf5_file['data'][str(key)]
     label = dset['labels'][()]
-    tbegin = np.maximum(0,dset['times'][0]- 2*T*1000)
-    tend = dset['times'][-1] 
+    tbegin = dset['times'][0]
+    tend = np.maximum(0,dset['times'][-1]- 2*T*1000 )
     start_time = np.random.randint(tbegin, tend) if shuffle else 0
 
     tmad = get_tmad_slice(dset['times'][()], dset['addrs'][()], start_time, T*1000)
@@ -145,7 +146,7 @@ def create_dataloader(
                                 target_transform = target_transform_train, 
                                 chunk_size = chunk_size_train)
 
-    train_dl = torch.utils.data.DataLoader(train_d, batch_size=batch_size, **dl_kwargs)
+    train_dl = torch.utils.data.DataLoader(train_d, batch_size=batch_size, shuffle=True, **dl_kwargs)
 
     test_d = DVSGestureDataset(root,
                                transform = transform_test, 

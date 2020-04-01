@@ -16,8 +16,8 @@ import torchneuromorphic.transforms as transforms
 if __name__ == "__main__":
     train_dl, test_dl = create_dataloader(
             root='data/dvsgesture/dvs_gestures_build19.hdf5',
-            batch_size=32,
-            ds=2,
-            num_workers=2)
+            batch_size=64,
+            ds=4,
+            num_workers=0)
     ho = iter(test_dl)
     frames, labels = next(ho)
