@@ -10,6 +10,7 @@
 # Licence : GPLv2
 #----------------------------------------------------------------------------- 
 import numpy as np
+import pandas as pd
 import torch, bisect
 from torchvision.transforms import Compose,ToTensor,Normalize,Lambda
 
@@ -72,6 +73,28 @@ class CropDims(object):
             idx = np.where(tmad[:,d]<self.low_crop[i])
             tmad = np.delete(tmad,idx,0)
         return tmad
+
+    def __repr__(self):
+        return self.__class__.__name__ + '()'
+
+class Attention(object):
+    def __init__(self, n_attention_events, size):
+        '''
+        Crop around the median event in the last n_events.
+        '''
+        self.att_shape = np.array(size[1:], dtype=np.int64)
+        self.n_att_events = n_attention_events
+
+    def __call__(self, tmad):
+        df = pd.DataFrame(tmad, columns=['t', 'p', 'x', 'y'])
+        # compute centroid in x and y
+        centroids = df.loc[:, ['x', 'y']].rolling(window=self.n_att_events,
+                                                  min_periods=1).median().astype(int)
+        # re-address (translate) events with respect to centroid corner
+        df.loc[:, ['x', 'y']] -= centroids - self.att_shape // 2
+        # remove out of range events
+        df = df.loc[(df.x >= 0) & (df.x < self.att_shape[1]) & (df.y >= 0) & (df.y < self.att_shape[0])]
+        return df.to_numpy()
 
     def __repr__(self):
         return self.__class__.__name__ + '()'
