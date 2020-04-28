@@ -120,21 +120,31 @@ def create_dataloader(
         transform_test = None,
         target_transform_train = None,
         target_transform_test = None,
+        n_events_attention=None,
         **dl_kwargs):
     if ds is None:
         ds = 4
     size = [2, 128//ds, 128//ds]
 
+    if n_events_attention is None:
+        default_transform = lambda chunk_size: Compose([
+            Downsample(factor=[dt,1,ds,ds]),
+            ToCountFrame(T = chunk_size, size = size),
+            ToTensor()
+        ])
+    else:
+        default_transform = lambda chunk_size: Compose([
+            Downsample(factor=[dt,1,1,1]),
+            Attention(n_events_attention, size=size),
+            ToCountFrame(T = chunk_size, size = size),
+            ToTensor()
+        ])
+
     if transform_train is None:
-        transform_train = Compose([
-            Downsample(factor=[dt,1,ds,ds]),
-            ToCountFrame(T = chunk_size_train, size = size),
-            ToTensor()])
+        transform_train = default_transform(chunk_size_train)
     if transform_test is None:
-        transform_test = Compose([
-            Downsample(factor=[dt,1,ds,ds]),
-            ToCountFrame(T = chunk_size_test, size = size),
-            ToTensor()])
+        transform_test = default_transform(chunk_size_test)
+
     if target_transform_train is None:
         target_transform_train =Compose([Repeat(chunk_size_train), toOneHot(11)])
     if target_transform_test is None:
