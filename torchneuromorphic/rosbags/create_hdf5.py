@@ -52,7 +52,7 @@ def create_events_hdf5(directory, hdf5_filename, gather_rosbags=gather_rosbags_c
         extra_grp = f.create_group('extra')
         train_keys = []
         test_keys = []
-        for file_d in tqdm(train_bags + test_bags):
+        for file_d in train_bags + test_bags:
             filename=os.path.basename(file_d)
             class_name=os.path.basename(os.path.dirname(file_d))
             label=label_mapping[class_name]

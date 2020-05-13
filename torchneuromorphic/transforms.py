@@ -1,14 +1,14 @@
 #!/bin/python
 #-----------------------------------------------------------------------------
-# File Name : 
+# File Name :
 # Author: Emre Neftci
 #
 # Creation Date : Tue Nov  5 16:26:06 2019
-# Last Modified : 
+# Last Modified :
 #
 # Copyright : (c) UC Regents, Emre Neftci
 # Licence : GPLv2
-#----------------------------------------------------------------------------- 
+#-----------------------------------------------------------------------------
 import numpy as np
 import pandas as pd
 import torch, bisect
@@ -77,6 +77,23 @@ class CropDims(object):
     def __repr__(self):
         return self.__class__.__name__ + '()'
 
+class CropCenter(object):
+    def __init__(self, center, size):
+        self.center = np.array(center, dtype=np.uint32)
+        self.att_shape = np.array(size[1:], dtype=np.uint32)
+        self.translation = (center - self.att_shape // 2).astype(np.uint32)
+    def __call__(self, tmad):
+        trans = np.repeat(self.translation[np.newaxis, :], len(tmad), axis=0)
+        tmad[:, 2:] -= trans
+        idx = np.where(np.any(tmad[:, 2:]>=self.att_shape, axis=1))
+        tmad = np.delete(tmad,idx,0)
+        idx = np.where(np.any(tmad[:, 2:]<[0,0], axis=1))
+        tmad = np.delete(tmad,idx,0)
+        return tmad
+
+    def __repr__(self):
+        return self.__class__.__name__ + '()'
+
 class Attention(object):
     def __init__(self, n_attention_events, size):
         '''
@@ -105,7 +122,7 @@ class ToChannelHeightWidth(object):
         if n==2:
             o = np.zeros(tmad.shape[0], dtype=tmad.dtype)
             return np.column_stack([tmad, o, o])
-            
+
         elif n==4:
             return tmad
 
@@ -118,7 +135,7 @@ class ToChannelHeightWidth(object):
 class ToCountFrame(object):
     """Convert Address Events to Binary tensor.
 
-    Converts a numpy.ndarray (T x H x W x C) to a torch.FloatTensor of shape (T x C x H x W) in the range [0., 1., ...] 
+    Converts a numpy.ndarray (T x H x W x C) to a torch.FloatTensor of shape (T x C x H x W) in the range [0., 1., ...]
     """
     def __init__(self, T=500, size=[2, 32, 32]):
         self.T = T
@@ -177,6 +194,3 @@ class ToTensor(object):
 
     def __repr__(self):
         return self.__class__.__name__ + '()'
-
-
-

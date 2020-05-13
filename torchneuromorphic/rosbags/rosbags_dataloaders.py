@@ -116,9 +116,10 @@ def create_dataloader(
     if ds is None:
         ds = 4
     size = [2, 128//ds, 128//ds]
+    center = [64,64]
 
     default_transform = lambda chunk_size: Compose([
-        CropDims(low_crop=[0,0], high_crop=[31,31], dims=[2,3]),
+        CropCenter(center, size),
         Downsample(factor=[dt,1,1,1]),
         ToCountFrame(T = chunk_size, size = size),
         ToTensor()
