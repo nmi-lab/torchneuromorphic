@@ -228,5 +228,6 @@ def rosbag_to_events(filename, topic='/dvs_right/events'):
         raise(exc)
     all_events = []
     data = importRosbag(filename)[topic]
-    data['ts'] -= data['ts'][0]
+    data['ts'] -= data['ts'][0] # align at 0
+    data['ts'] *= 1000000. # second to microsecond
     return data

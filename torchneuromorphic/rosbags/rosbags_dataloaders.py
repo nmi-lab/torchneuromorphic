@@ -48,6 +48,8 @@ class RosbagDataset(NeuromorphicDataset):
                 target_transform=target_transform )
 
         with h5py.File(root, 'r', swmr=True, libver="latest") as f:
+            self.label_order = f['extra']['label_order'][()]
+            self.n_labels = len(self.label_order)
             if train:
                 self.n = f['extra'].attrs['Ntrain']
                 self.keys = f['extra']['train_keys'][()]
@@ -59,7 +61,6 @@ class RosbagDataset(NeuromorphicDataset):
         super(RosbagDataset, self).download()
 
     def create_hdf5(self):
-        print("create?")
         create_events_hdf5(self.resources_local[0], self.root)
 
     def __len__(self):
@@ -92,13 +93,11 @@ def sample(hdf5_file,
         shuffle = False):
     dset = hdf5_file['data'][str(key)]
     label = dset['labels'][()]
-    tbegin = dset['times'][0]
-    tend = np.maximum(0,dset['times'][-1]- 2*T*1000 )
-    start_time = np.random.randint(tbegin, tend) if shuffle else 0
-
+    tend = dset['times'][-1]
+    start_time = 0
     tmad = get_tmad_slice(dset['times'][()], dset['addrs'][()], start_time, T*1000)
     tmad[:,0]-=tmad[0,0]
-    return tmad[:, [0,3,1,2]], label
+    return tmad, label
 
 
 def create_dataloader(
@@ -118,19 +117,12 @@ def create_dataloader(
         ds = 4
     size = [2, 128//ds, 128//ds]
 
-    if n_events_attention is None:
-        default_transform = lambda chunk_size: Compose([
-            Downsample(factor=[dt,1,ds,ds]),
-            ToCountFrame(T = chunk_size, size = size),
-            ToTensor()
-        ])
-    else:
-        default_transform = lambda chunk_size: Compose([
-            Downsample(factor=[dt,1,1,1]),
-            Attention(n_events_attention, size=size),
-            ToCountFrame(T = chunk_size, size = size),
-            ToTensor()
-        ])
+    default_transform = lambda chunk_size: Compose([
+        CropDims(low_crop=[0,0], high_crop=[31,31], dims=[2,3]),
+        Downsample(factor=[dt,1,1,1]),
+        ToCountFrame(T = chunk_size, size = size),
+        ToTensor()
+    ])
 
     if transform_train is None:
         transform_train = default_transform(chunk_size_train)
@@ -138,9 +130,9 @@ def create_dataloader(
         transform_test = default_transform(chunk_size_test)
 
     if target_transform_train is None:
-        target_transform_train =Compose([Repeat(chunk_size_train), toOneHot(11)])
+        target_transform_train =Compose([Repeat(chunk_size_train), toOneHot(4)]) # HACK HACK HACK! Can't get n_labels from here
     if target_transform_test is None:
-        target_transform_test = Compose([Repeat(chunk_size_test), toOneHot(11)])
+        target_transform_test = Compose([Repeat(chunk_size_test), toOneHot(4)])
 
     train_d = RosbagDataset(root,
                             train=True,
