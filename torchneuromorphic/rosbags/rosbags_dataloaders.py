@@ -49,6 +49,7 @@ class RosbagDataset(NeuromorphicDataset):
 
         with h5py.File(root, 'r', swmr=True, libver="latest") as f:
             self.label_order = f['extra']['label_order'][()]
+            print("Labels in order: {}".format(self.label_order))
             self.n_labels = len(self.label_order)
             if train:
                 self.n = f['extra'].attrs['Ntrain']
