@@ -12,7 +12,7 @@
 import os
 import torch
 import torch.utils.data as data
-from torchvision.datasets.utils import extract_archive, makedir_exist_ok, verify_str_arg, check_integrity, gen_bar_updater
+from torchvision.datasets.utils import extract_archive, verify_str_arg, check_integrity, gen_bar_updater
 
 DEFAULT_ROOT = 'data/'
 
@@ -32,7 +32,7 @@ def download_url(url, root, filename=None, md5=None):
     fpath = os.path.join(root, filename)
 
 
-    makedir_exist_ok(root)
+    os.makedirs(root, exist_ok=True)
 
     # check if file is already present locally
     if check_integrity(fpath, md5):
@@ -156,7 +156,7 @@ class NeuromorphicDataset(data.Dataset):
         if self.check_exists():
             return True
         else:
-            makedir_exist_ok(self.directory)
+            os.makedirs(self.directory, exist_ok=True)
             for url, md5, filename in self.resources_url:
                 download_and_extract_archive(url, download_root=self.directory, filename=filename, md5=md5)
             return False
