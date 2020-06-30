@@ -124,11 +124,14 @@ def create_dataloader(
         **dl_kwargs):
     if ds is None:
         ds = 4
-    size = [2, 128//ds, 128//ds]
+    if isinstance(ds,int):
+        ds = [ds,ds]
+        
+    size = [2, 128//ds[0], 128//ds[1]]
 
     if n_events_attention is None:
         default_transform = lambda chunk_size: Compose([
-            Downsample(factor=[dt,1,ds,ds]),
+            Downsample(factor=[dt,1,ds[0],ds[1]]),
             ToCountFrame(T = chunk_size, size = size),
             ToTensor()
         ])

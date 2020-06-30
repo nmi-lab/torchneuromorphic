@@ -88,17 +88,18 @@ def download_and_extract_archive(url, download_root, extract_root=None, filename
 class NeuromorphicDataset(data.Dataset):
     _repr_indent = 4
 
-    def __init__(self, root, transforms=None, transform=None, target_transform=None):
+    def __init__(self, root=None, transforms=None, transform=None, target_transform=None):
         if isinstance(root, torch._six.string_classes):
             root = os.path.expanduser(root)
         self.root = root
  
-        if not os.path.isfile(root):
-            if self.download_and_create:
-                self.download()
-                self.create_hdf5()
-            else:
-                raise Exception("File {} does not exist and download_and_create is False".format(root))
+        if root is not None:
+            if not os.path.isfile(root):
+                if self.download_and_create:
+                    self.download()
+                    self.create_hdf5()
+                else:
+                    raise Exception("File {} does not exist and download_and_create is False".format(root))
 
 
 

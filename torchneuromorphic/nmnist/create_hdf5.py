@@ -19,7 +19,7 @@ from ..events_timeslices import *
 from ..utils import *
 import os
 
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 import torch
 import torch.utils.data
 from ..utils import load_ATIS_bin, load_jaer
@@ -64,6 +64,7 @@ def create_events_hdf5(directory, hdf5_filename):
     fns_test = [val for sublist in fns_test for val in sublist]
     test_keys = []
     train_keys = []
+    label_list = [[] for i in range(10)]
 
     with h5py.File(hdf5_filename, 'w') as f:
         f.clear()
@@ -90,8 +91,10 @@ def create_events_hdf5(directory, hdf5_filename):
             lbl_dset= subgrp.create_dataset('labels', data=label, dtype=np.uint8)
             subgrp.attrs['meta_info']= str(metas[-1])
             assert label in range(10)
+            label_list[label].append(key)
             key += 1
         extra_grp.create_dataset('train_keys', data=train_keys)
+        extra_grp.create_dataset('keys_by_label', data=label_list)
         extra_grp.create_dataset('test_keys', data=test_keys)
         extra_grp.attrs['N'] = len(train_keys) + len(test_keys)
         extra_grp.attrs['Ntrain'] = len(train_keys)

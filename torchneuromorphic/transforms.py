@@ -68,10 +68,12 @@ class CropDims(object):
 
     def __call__(self, tmad):
         for i, d in enumerate(self.dims):
-            idx = np.where(tmad[:,d]>self.high_crop[i])
+            idx = np.where(tmad[:,d]>=self.high_crop[i])
             tmad = np.delete(tmad,idx,0)
             idx = np.where(tmad[:,d]<self.low_crop[i])
             tmad = np.delete(tmad,idx,0)
+            #Normalize
+            tmad[:,d]=tmad[:,d]-self.low_crop[i]
         return tmad
 
     def __repr__(self):

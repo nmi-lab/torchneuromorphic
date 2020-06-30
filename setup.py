@@ -28,6 +28,7 @@ setup(
         "torchvision>=0.4.1",
         "torch>=1.1.0",
         "scipy>=1.0",
-        "h5py"
+        "h5py",
+        "pandas",
     ]
 )
