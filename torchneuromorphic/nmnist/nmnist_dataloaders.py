@@ -62,11 +62,12 @@ class NMNISTDataset(NeuromorphicDataset):
             if train:
                 self.n = f['extra'].attrs['Ntrain']
                 self.keys = f['extra']['train_keys'][()]
+                self.keys_by_label = f['extra']['train_keys_by_label'][()]
             else:
                 self.n = f['extra'].attrs['Ntest']
                 self.keys = f['extra']['test_keys'][()]
+                self.keys_by_label = f['extra']['test_keys_by_label'][()]
 
-            self.keys_by_label = f['extra']['keys_by_label'][()]
 
     def download(self):
         isexisting = super(NMNISTDataset, self).download()
@@ -81,8 +82,10 @@ class NMNISTDataset(NeuromorphicDataset):
     def __getitem__(self, key):
         #Important to open and close in getitem to enable num_workers>0
         with h5py.File(self.root, 'r', swmr=True, libver="latest") as f:
-            if not self.train:
-                key = key + f['extra'].attrs['Ntrain']
+            #if self.train:
+            #    key = f['extra']['train_keys'][key]
+            #else:
+            #    key = f['extra']['test_keys'][key]
             data, target = sample(
                     f,
                     key,

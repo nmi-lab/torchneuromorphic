@@ -64,7 +64,8 @@ def create_events_hdf5(directory, hdf5_filename):
     fns_test = [val for sublist in fns_test for val in sublist]
     test_keys = []
     train_keys = []
-    label_list = [[] for i in range(10)]
+    train_label_list = [[] for i in range(10)]
+    test_label_list = [[] for i in range(10)]
 
     with h5py.File(hdf5_filename, 'w') as f:
         f.clear()
@@ -82,20 +83,22 @@ def create_events_hdf5(directory, hdf5_filename):
 
             if istrain: 
                 train_keys.append(key)
+                train_label_list[label].append(key)
             else:
                 test_keys.append(key)
+                test_label_list[label].append(key)
             metas.append({'key':str(key), 'training sample':istrain}) 
             subgrp = data_grp.create_group(str(key))
-            tm_dset = subgrp.create_dataset('times' , data=times, dtype=np.uint32)
-            ad_dset = subgrp.create_dataset('addrs' , data=addrs, dtype=np.uint8)
-            lbl_dset= subgrp.create_dataset('labels', data=label, dtype=np.uint8)
+            tm_dset = subgrp.create_dataset('times' , data=times, dtype = np.uint32)
+            ad_dset = subgrp.create_dataset('addrs' , data=addrs, dtype = np.uint8)
+            lbl_dset= subgrp.create_dataset('labels', data=label, dtype = np.uint8)
             subgrp.attrs['meta_info']= str(metas[-1])
             assert label in range(10)
-            label_list[label].append(key)
             key += 1
-        extra_grp.create_dataset('train_keys', data=train_keys)
-        extra_grp.create_dataset('keys_by_label', data=label_list)
-        extra_grp.create_dataset('test_keys', data=test_keys)
+        extra_grp.create_dataset('train_keys', data = train_keys)
+        extra_grp.create_dataset('train_keys_by_label', data = train_label_list)
+        extra_grp.create_dataset('test_keys_by_label', data = test_label_list)
+        extra_grp.create_dataset('test_keys', data = test_keys)
         extra_grp.attrs['N'] = len(train_keys) + len(test_keys)
         extra_grp.attrs['Ntrain'] = len(train_keys)
         extra_grp.attrs['Ntest'] = len(test_keys)
