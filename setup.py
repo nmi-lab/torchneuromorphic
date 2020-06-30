@@ -16,12 +16,12 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name = "torchneuromorphic",
-    version = "0.2",
+    version = "0.2.1",
     author = "Emre Neftci",
     author_email = "eneftci@uci.edu",
     description = ("Dataset loaders for pytorch"),
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
-    download_url='https://github.com/nmi-lab/torchneuromorphic/archive/0.2.tar.gz',
+    download_url='https://github.com/nmi-lab/torchneuromorphic/archive/0.2.1.tar.gz',
     long_description=long_description,
     license='Apache License 2.0',
     install_requires=[
