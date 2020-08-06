@@ -11,10 +11,11 @@
 #----------------------------------------------------------------------------- 
 from torchneuromorphic.doublenmnist.doublenmnist_dataloaders import *
 from torchneuromorphic.utils import plot_frames_imshow
+from matplotlib import pyplot as plt
 
 if __name__ == "__main__":
     train_dl, test_dl = sample_double_mnist_task(
-            meta_dataset_type = 'val',
+            meta_dataset_type = 'train',
             N = 4,
             K = 2,
             root='data/nmnist/n_mnist.hdf5',
@@ -25,3 +26,6 @@ if __name__ == "__main__":
     iter_meta_test = iter(test_dl)
     frames_train, labels_train = next(iter_meta_train)
     frames_test , labels_test  = next(iter_meta_test)
+
+    plot_frames_imshow(frames_train, labels_train, do1h=False, nim=5)
+    plt.show()

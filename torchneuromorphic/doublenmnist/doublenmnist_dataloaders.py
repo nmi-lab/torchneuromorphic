@@ -72,7 +72,6 @@ class DoubleNMNISTDataset(NeuromorphicDataset):
         keys_filt_left  = np.array([ np.random.choice(s, samples_per_class) for s in self.data_train.keys_by_label[labels_left]]).reshape(-1)
         keys_filt_right = np.array([ np.random.choice(s, samples_per_class) for s in self.data_train.keys_by_label[labels_right]]).reshape(-1)
         self.keys = list(zip(keys_filt_left, keys_filt_right))
-        print(self.keys)
 
     def __len__(self):
         return self.n
@@ -87,8 +86,6 @@ class DoubleNMNISTDataset(NeuromorphicDataset):
         r2 = np.random.randint(0,size_y)
         data[:, :, :size_x, r1:r1+size_y] = data_l
         data[:, :, size_x:, r2:r2+size_y] = data_r
-        print(key_l, key_r)
-        print(label_l.argmax(1)[-1], label_r.argmax(1)[-1])
         target = self.labels[key]
         return data, target
 
@@ -108,7 +105,6 @@ def create_datasets(
         classes_meta = np.arange(100, dtype='int')):
 
     size = [2, 32//ds, 32//ds]
-    print(size)
 
     if transform_train is None:
         transform_train = Compose([
@@ -129,7 +125,6 @@ def create_datasets(
 
 
     labels_u = np.random.choice(classes_meta, nclasses) #100 here becuase we have two pairs of digits between 0 and 9
-    print(labels_u)
 
     train_ds = DoubleNMNISTDataset(root,train=True,
                                  transform = transform_train, 
