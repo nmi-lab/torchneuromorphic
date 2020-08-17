@@ -55,6 +55,7 @@ class DoubleNMNISTDataset(NeuromorphicDataset):
         labels_left =  self.labels_u // 10
         labels_right =  self.labels_u % 10
         self.labels = np.repeat(self.labels_u, samples_per_class)
+        self.labels_map =  dict(zip(np.unique(self.labels),np.arange(nclasses)))
 
 
         super(DoubleNMNISTDataset, self).__init__(root = None,
@@ -86,7 +87,7 @@ class DoubleNMNISTDataset(NeuromorphicDataset):
         r2 = np.random.randint(0,size_y)
         data[:, :, :size_x, r1:r1+size_y] = data_l
         data[:, :, size_x:, r2:r2+size_y] = data_r
-        target = self.labels[key]
+        target = self.labels_map[self.labels[key]]
         return data, target
 
 def create_datasets(
@@ -119,12 +120,12 @@ def create_datasets(
             ToCountFrame(T = chunk_size_test, size = size),
             ToTensor()])
     if target_transform_train is None:
-        target_transform_train =Compose([Repeat(chunk_size_train), toOneHot(10)])
+        target_transform_train =Compose([Repeat(chunk_size_train), toOneHot(nclasses)])
     if target_transform_test is None:
-        target_transform_test = Compose([Repeat(chunk_size_test), toOneHot(10)])
+        target_transform_test = Compose([Repeat(chunk_size_test), toOneHot(nclasses)])
 
 
-    labels_u = np.random.choice(classes_meta, nclasses) #100 here becuase we have two pairs of digits between 0 and 9
+    labels_u = np.random.choice(classes_meta, nclasses,replace=False) #100 here becuase we have two pairs of digits between 0 and 9
 
     train_ds = DoubleNMNISTDataset(root,train=True,
                                  transform = transform_train, 
