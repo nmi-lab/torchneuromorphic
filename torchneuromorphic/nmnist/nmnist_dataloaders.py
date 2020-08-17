@@ -82,15 +82,14 @@ class NMNISTDataset(NeuromorphicDataset):
     def __getitem__(self, key):
         #Important to open and close in getitem to enable num_workers>0
         with h5py.File(self.root, 'r', swmr=True, libver="latest") as f:
-            #if self.train:
-            #    key = f['extra']['train_keys'][key]
-            #else:
-            #    key = f['extra']['test_keys'][key]
+            if self.train:
+                key = f['extra']['train_keys'][key]
+            else:
+                key = f['extra']['test_keys'][key]
             data, target = sample(
                     f,
                     key,
-                    T = self.chunk_size,
-                    shuffle=self.train)
+                    T = self.chunk_size)
 
         if self.transform is not None:
             data = self.transform(data)
@@ -102,8 +101,7 @@ class NMNISTDataset(NeuromorphicDataset):
 
 def sample(hdf5_file,
         key,
-        T = 500,
-        shuffle = False):
+        T = 300):
     dset = hdf5_file['data'][str(key)]
     label = dset['labels'][()]
     tend = dset['times'][-1] 
