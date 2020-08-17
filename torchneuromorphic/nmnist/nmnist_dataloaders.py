@@ -59,14 +59,18 @@ class NMNISTDataset(NeuromorphicDataset):
                 target_transform=target_transform )
         
         with h5py.File(root, 'r', swmr=True, libver="latest") as f:
-            if train:
-                self.n = f['extra'].attrs['Ntrain']
-                self.keys = f['extra']['train_keys'][()]
-                self.keys_by_label = f['extra']['train_keys_by_label'][()]
-            else:
-                self.n = f['extra'].attrs['Ntest']
-                self.keys = f['extra']['test_keys'][()]
-                self.keys_by_label = f['extra']['test_keys_by_label'][()]
+            try:
+                if train:
+                    self.n = f['extra'].attrs['Ntrain']
+                    self.keys = f['extra']['train_keys'][()]
+                    self.keys_by_label = f['extra']['train_keys_by_label'][()]
+                else:
+                    self.n = f['extra'].attrs['Ntest']
+                    self.keys = f['extra']['test_keys'][()]
+                    self.keys_by_label = f['extra']['test_keys_by_label'][()]
+            except AttributeError:
+                print('Attribute not found in hdf5 file. You may be using an old hdf5 build. Delete {0} and run again'.format(root))
+                raise
 
 
     def download(self):
