@@ -161,6 +161,7 @@ def create_dataloader(
         classes_meta = np.arange(100, dtype='int'),
         **dl_kwargs):
 
+
     train_d, test_d = create_datasets(
         root = 'data/nmnist/n_mnist.hdf5',
         batch_size = batch_size,
@@ -172,7 +173,9 @@ def create_dataloader(
         transform_test = transform_test,
         target_transform_train = target_transform_train,
         target_transform_test = target_transform_test,
-        classes_meta = classes_meta)
+        classes_meta = classes_meta,
+        nclasses = nclasses,
+        samples_per_class = samples_per_class)
 
 
     train_dl = torch.utils.data.DataLoader(train_d, shuffle=True, batch_size=batch_size, **dl_kwargs)

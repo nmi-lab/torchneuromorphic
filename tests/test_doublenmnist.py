@@ -16,10 +16,10 @@ from matplotlib import pyplot as plt
 if __name__ == "__main__":
     train_dl, test_dl = sample_double_mnist_task(
             meta_dataset_type = 'train',
-            N = 4,
-            K = 2,
+            N = 20,
+            K = 5,
             root='data/nmnist/n_mnist.hdf5',
-            batch_size=10,
+            batch_size=200,
             ds=1,
             num_workers=0)
     iter_meta_train = iter(train_dl)
