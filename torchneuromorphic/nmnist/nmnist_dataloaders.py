@@ -8,13 +8,14 @@
 # Copyright : (c)
 # Licence : Apache License, Version 2.0
 #-----------------------------------------------------------------------------
+
 import struct
-import time
+import time, copy
 import numpy as np
 import scipy.misc
 import h5py
 import torch.utils.data
-from ..neuromorphic_dataset import NeuromorphicDataset
+from ..neuromorphic_dataset import NeuromorphicDataset 
 from ..events_timeslices import *
 from ..transforms import *
 from .create_hdf5 import create_events_hdf5
@@ -38,7 +39,7 @@ class NMNISTDataset(NeuromorphicDataset):
     resources_local = [directory+'Train', directory+'Test']
 
     def __init__(
-            self,
+            self, 
             root,
             train=True,
             transform=None,
@@ -47,23 +48,31 @@ class NMNISTDataset(NeuromorphicDataset):
             chunk_size = 500):
 
         self.n = 0
+        self.nclasses = 10
         self.download_and_create = download_and_create
         self.root = root
-        self.train = train
+        self.train = train 
         self.chunk_size = chunk_size
 
         super(NMNISTDataset, self).__init__(
                 root,
                 transform=transform,
                 target_transform=target_transform )
-
+        
         with h5py.File(root, 'r', swmr=True, libver="latest") as f:
-            if train:
-                self.n = f['extra'].attrs['Ntrain']
-                self.keys = f['extra']['train_keys']
-            else:
-                self.n = f['extra'].attrs['Ntest']
-                self.keys = f['extra']['test_keys']
+            try:
+                if train:
+                    self.n = f['extra'].attrs['Ntrain']
+                    self.keys = f['extra']['train_keys'][()]
+                    self.keys_by_label = f['extra']['train_keys_by_label'][()]
+                else:
+                    self.n = f['extra'].attrs['Ntest']
+                    self.keys = f['extra']['test_keys'][()]
+                    self.keys_by_label = f['extra']['test_keys_by_label'][()]
+            except AttributeError:
+                print('Attribute not found in hdf5 file. You may be using an old hdf5 build. Delete {0} and run again'.format(root))
+                raise
+
 
     def download(self):
         isexisting = super(NMNISTDataset, self).download()
@@ -74,12 +83,14 @@ class NMNISTDataset(NeuromorphicDataset):
 
     def __len__(self):
         return self.n
-
+        
     def __getitem__(self, key):
         #Important to open and close in getitem to enable num_workers>0
         with h5py.File(self.root, 'r', swmr=True, libver="latest") as f:
-            if not self.train:
-                key = key + f['extra'].attrs['Ntrain']
+            #if self.train:
+            #    key = f['extra']['train_keys'][key]
+            #else:
+            #    key = f['extra']['test_keys'][key]
             data, target = sample(
                     f,
                     key,
@@ -100,12 +111,56 @@ def sample(hdf5_file,
         shuffle = False):
     dset = hdf5_file['data'][str(key)]
     label = dset['labels'][()]
-    tend = dset['times'][-1]
+    tend = dset['times'][-1] 
     start_time = 0
 
     tmad = get_tmad_slice(dset['times'][()], dset['addrs'][()], start_time, T*1000)
     tmad[:,0]-=tmad[0,0]
     return tmad, label
+
+def create_datasets(
+        root = 'data/nmnist/n_mnist.hdf5',
+        batch_size = 72 ,
+        chunk_size_train = 300,
+        chunk_size_test = 300,
+        ds = 1,
+        dt = 1000,
+        transform_train = None,
+        transform_test = None,
+        target_transform_train = None,
+        target_transform_test = None):
+
+    size = [2, 32//ds, 32//ds]
+    print(size)
+
+    if transform_train is None:
+        transform_train = Compose([
+            CropDims(low_crop=[0,0], high_crop=[32,32], dims=[2,3]),
+            Downsample(factor=[dt,1,1,1]),
+            ToCountFrame(T = chunk_size_train, size = size),
+            ToTensor()])
+    if transform_test is None:
+        transform_test = Compose([
+            CropDims(low_crop=[0,0], high_crop=[32,32], dims=[2,3]),
+            Downsample(factor=[dt,1,1,1]),
+            ToCountFrame(T = chunk_size_test, size = size),
+            ToTensor()])
+    if target_transform_train is None:
+        target_transform_train =Compose([Repeat(chunk_size_train), toOneHot(10)])
+    if target_transform_test is None:
+        target_transform_test = Compose([Repeat(chunk_size_test), toOneHot(10)])
+
+    train_ds = NMNISTDataset(root,train=True,
+                                 transform = transform_train, 
+                                 target_transform = target_transform_train, 
+                                 chunk_size = chunk_size_train)
+
+    test_ds = NMNISTDataset(root, transform = transform_test, 
+                                 target_transform = target_transform_test, 
+                                 train=False,
+                                 chunk_size = chunk_size_test)
+
+    return train_ds, test_ds
 
 def create_dataloader(
         root = 'data/nmnist/n_mnist.hdf5',
@@ -118,49 +173,25 @@ def create_dataloader(
         transform_test = None,
         target_transform_train = None,
         target_transform_test = None,
-        n_events_attention=None,
         **dl_kwargs):
 
-    size = [2, 32//ds, 32//ds]
-    print(size)
+    train_d, test_d = create_datasets(
+        root = 'data/nmnist/n_mnist.hdf5',
+        batch_size = batch_size,
+        chunk_size_train = chunk_size_train,
+        chunk_size_test = chunk_size_test,
+        ds = ds,
+        dt = dt,
+        transform_train = transform_train,
+        transform_test = transform_test,
+        target_transform_train = target_transform_train,
+        target_transform_test = target_transform_test)
 
-    if n_events_attention is None:
-        default_transform = lambda chunk_size: Compose([
-            CropDims(low_crop=[0,0], high_crop=[31,31], dims=[2,3]),
-            Downsample(factor=[dt,1,ds,ds]),
-            ToCountFrame(T = chunk_size, size = size),
-            ToTensor()
-        ])
-    else:
-        default_transform = lambda chunk_size: Compose([
-            Downsample(factor=[dt,1,1,1]),
-            Attention(n_events_attention, size=size),
-            ToCountFrame(T = chunk_size, size = size),
-            ToTensor()
-        ])
-
-    if transform_train is None:
-        transform_train = default_transform(chunk_size_train)
-    if transform_test is None:
-        transform_test = default_transform(chunk_size_test)
-
-    if target_transform_train is None:
-        target_transform_train =Compose([Repeat(chunk_size_train), toOneHot(10)])
-    if target_transform_test is None:
-        target_transform_test = Compose([Repeat(chunk_size_test), toOneHot(10)])
-
-    train_d = NMNISTDataset(root,train=True,
-                                 transform = transform_train,
-                                 target_transform = target_transform_train,
-                                 chunk_size = chunk_size_train)
 
     train_dl = torch.utils.data.DataLoader(train_d, shuffle=True, batch_size=batch_size, **dl_kwargs)
-
-    test_d = NMNISTDataset(root, transform = transform_test,
-                                 target_transform = target_transform_test,
-                                 train=False,
-                                 chunk_size = chunk_size_test)
-
     test_dl = torch.utils.data.DataLoader(test_d, shuffle=False, batch_size=batch_size, **dl_kwargs)
 
     return train_dl, test_dl
+
+
+
