@@ -110,13 +110,13 @@ def create_datasets(
     if transform_train is None:
         transform_train = Compose([
             CropDims(low_crop=[0,0], high_crop=[32,32], dims=[2,3]),
-            Downsample(factor=[dt,1,1,1]),
+            Downsample(factor=[dt,1,ds,ds]),
             ToCountFrame(T = chunk_size_train, size = size),
             ToTensor()])
     if transform_test is None:
         transform_test = Compose([
             CropDims(low_crop=[0,0], high_crop=[32,32], dims=[2,3]),
-            Downsample(factor=[dt,1,1,1]),
+            Downsample(factor=[dt,1,ds,ds]),
             ToCountFrame(T = chunk_size_test, size = size),
             ToTensor()])
     if target_transform_train is None:
