@@ -1,14 +1,14 @@
 #!/bin/python
 #-----------------------------------------------------------------------------
-# File Name : 
+# File Name :
 # Author: Emre Neftci
 #
 # Creation Date : Tue Nov  5 13:16:48 2019
-# Last Modified : 
+# Last Modified :
 #
 # Copyright : (c) UC Regents, Emre Neftci
 # Licence : GPLv2
-#----------------------------------------------------------------------------- 
+#-----------------------------------------------------------------------------
 import struct
 import numpy as np
 
@@ -172,7 +172,7 @@ def plot_frames_imshow(images, labels, nim=11, avg=50, do1h = True, transpose=Fa
                  ax = plt.subplot(gs[j, i])
              plt.imshow(images[j,i*avg:(i*avg+avg),0,:,:].sum(axis=0).T)
              plt.xticks([])
-             
+
              if i==0 and label_mapping is not None:
                  plt.title(label_mapping[int(categories[j])], fontsize=10)
              plt.yticks([])
@@ -219,3 +219,15 @@ def aedat_to_events(filename):
         end = np.searchsorted(events[0,:], l[2])
         clipped_events = np.column_stack([clipped_events,events[:,start:end]])
     return clipped_events.T, labels
+
+def rosbag_to_events(filename, topic='/dvs_right/events'):
+    try:
+        from importRosbag.importRosbag import importRosbag
+    except ImportError as exc:
+        print("This function requires the importRosbag library from https://github.com/event-driven-robotics")
+        raise(exc)
+    all_events = []
+    data = importRosbag(filename)[topic]
+    data['ts'] -= data['ts'][0] # align at 0
+    data['ts'] *= 1000000. # second to microsecond
+    return data
