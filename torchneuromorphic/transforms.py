@@ -148,6 +148,39 @@ class ToCountFrame(object):
     def __repr__(self):
         return self.__class__.__name__ + '()'
 
+
+class ToEventSum(object):
+    """Convert Address Events to Image By Summing.
+
+    Converts a numpy.ndarray (T x H x W x C) to a torch.FloatTensor of shape (C x H x W) in the range [0., 1., ...] 
+    """
+    def __init__(self, T=500, size=[2, 32, 32]):
+        self.T = T
+        self.size = size
+
+    def __call__(self, tmad):
+        times = tmad[:,0]
+        t_start = times[0]
+        t_end = times[-1]
+        addrs = tmad[:,1:]
+
+        ts = range(0, self.T)
+        chunks = np.zeros([len(ts)] + self.size, dtype='int8')
+        idx_start = 0
+        idx_end = 0
+        for i, t in enumerate(ts):
+            idx_end += find_first(times[idx_end:], t)
+            if idx_end > idx_start:
+                ee = addrs[idx_start:idx_end]
+                i_pol_x_y = (i, ee[:, 0], ee[:, 1], ee[:, 2])
+                np.add.at(chunks, i_pol_x_y, 1)
+            idx_start = idx_end
+        return chunks.sum(axis=0, keepdims=True)
+
+    def __repr__(self):
+        return self.__class__.__name__ + '()'
+
+
 class Repeat(object):
     '''
     Replicate np.array (C) as (n_repeat X C). This is useful to transform sample labels into sequences
@@ -164,7 +197,7 @@ class Repeat(object):
 class ToTensor(object):
     """Convert a ``numpy.ndarray`` to tensor.
 
-    Converts a numpy.ndarray (T x H x W x C) to a torch.FloatTensor of shape (T X H x W x C)
+    Converts a numpy.ndarray to a torch.FloatTensor of the same shape
     """
 
     def __call__(self, frame):
