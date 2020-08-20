@@ -164,7 +164,7 @@ def create_dataloader(
 
 
     train_d, test_d = create_datasets(
-        root = 'data/nmnist/n_mnist.hdf5',
+        root = root,
         batch_size = batch_size,
         chunk_size_train = chunk_size_train,
         chunk_size_test = chunk_size_test,
