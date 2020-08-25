@@ -103,6 +103,7 @@ def create_datasets(
         target_transform_test = None,
         nclasses = 5,
         samples_per_class = 2,
+        samples_per_test = 2,
         classes_meta = np.arange(100, dtype='int')):
 
     size = [2, 32//ds, 32//ds]
@@ -140,7 +141,7 @@ def create_datasets(
                                  train=False,
                                  chunk_size = chunk_size_test,
                                  nclasses = nclasses,
-                                 samples_per_class = samples_per_class,
+                                 samples_per_class = samples_per_test,
                                  labels_u = labels_u)
 
     return train_ds, test_ds
@@ -159,6 +160,7 @@ def create_dataloader(
         target_transform_test = None,
         nclasses = 5,
         samples_per_class = 2,
+        samples_per_test = 2,
         classes_meta = np.arange(100, dtype='int'),
         **dl_kwargs):
 
@@ -176,7 +178,8 @@ def create_dataloader(
         target_transform_test = target_transform_test,
         classes_meta = classes_meta,
         nclasses = nclasses,
-        samples_per_class = samples_per_class)
+        samples_per_class = samples_per_class,
+        samples_per_test = samples_per_test)
 
 
     train_dl = torch.utils.data.DataLoader(train_d, shuffle=True, batch_size=batch_size, **dl_kwargs)
@@ -187,6 +190,7 @@ def create_dataloader(
 
 def sample_double_mnist_task( N = 5,
                               K = 2,
+                              K_test = 2,
                               meta_split = [range(64), range(64,80), range(80,100)],
                               meta_dataset_type = 'train',
                               **kwargs):
@@ -196,4 +200,4 @@ def sample_double_mnist_task( N = 5,
     classes_meta['test']  = np.array(meta_split[2], dtype='int')
 
     assert meta_dataset_type in ['train', 'val', 'test']
-    return create_dataloader(classes_meta = classes_meta[meta_dataset_type], nclasses= N, samples_per_class = K, **kwargs)
+    return create_dataloader(classes_meta = classes_meta[meta_dataset_type], nclasses= N, samples_per_class = K, samples_per_test = K_test, **kwargs)
