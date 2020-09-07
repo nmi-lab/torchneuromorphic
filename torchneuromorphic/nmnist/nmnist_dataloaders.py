@@ -48,7 +48,7 @@ class NMNISTDataset(NeuromorphicDataset):
             chunk_size = 500):
 
         self.n = 0
-        self.nclasses = 10
+        self.nclasses = self.num_classes = 10
         self.download_and_create = download_and_create
         self.root = root
         self.train = train 
@@ -69,6 +69,7 @@ class NMNISTDataset(NeuromorphicDataset):
                     self.n = f['extra'].attrs['Ntest']
                     self.keys = f['extra']['test_keys'][()]
                     self.keys_by_label = f['extra']['test_keys_by_label'][()]
+                    self.keys_by_label[:,:] -= self.keys_by_label[0,0] #normalize
             except AttributeError:
                 print('Attribute not found in hdf5 file. You may be using an old hdf5 build. Delete {0} and run again'.format(root))
                 raise
@@ -129,7 +130,6 @@ def create_datasets(
         target_transform_test = None):
 
     size = [2, 32//ds, 32//ds]
-    print(size)
 
     if transform_train is None:
         transform_train = Compose([

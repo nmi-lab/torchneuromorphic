@@ -163,7 +163,7 @@ class ToCountFrame(object):
         return chunks
 
     def __repr__(self):
-        return self.__class__.__name__ + '()'
+        return self.__class__.__name__ + '(T={0})'.format(self.T)
 
 
 class ToEventSum(object):

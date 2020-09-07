@@ -13,6 +13,7 @@ import os
 import torch
 import torch.utils.data as data
 from torchvision.datasets.utils import extract_archive, verify_str_arg, check_integrity, gen_bar_updater
+from .transforms import Compose
 
 DEFAULT_ROOT = 'data/'
 
@@ -85,10 +86,13 @@ def download_and_extract_archive(url, download_root, extract_root=None, filename
     print("Extracting {} to {}".format(archive, extract_root))
     extract_archive(archive, extract_root, remove_finished)
 
+def identity(x):
+    return x
+
 class NeuromorphicDataset(data.Dataset):
     _repr_indent = 4
 
-    def __init__(self, root=None, transforms=None, transform=None, target_transform=None):
+    def __init__(self, root=None, transforms = None, transform=None, target_transform=None):
         if isinstance(root, torch._six.string_classes):
             root = os.path.expanduser(root)
         self.root = root
@@ -111,6 +115,11 @@ class NeuromorphicDataset(data.Dataset):
                              "be passed as argument")
 
         # for backwards-compatibility
+        if transform is None:
+            transform = identity
+        if target_transform is None:
+            target_transform = identity
+
         self.transform = transform
         self.target_transform = target_transform
 
@@ -164,6 +173,23 @@ class NeuromorphicDataset(data.Dataset):
 
     def create_hdf5(self):
         raise NotImplementedError()
+
+    def target_transform_append(self, transform):
+        if transform is None:
+            return
+        if self.target_transform is None:
+            self.target_transform = transform
+        else:
+            self.target_transform = Compose([self.target_transform, transform])
+
+
+    def transform_append(self, transform):
+        if transform is None:
+            return
+        if self.transform is None:
+            self.transform = transform
+        else:
+            self.transform = Compose([self.transform, transform])
 
 
 
