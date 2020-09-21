@@ -45,13 +45,15 @@ class NMNISTDataset(NeuromorphicDataset):
             transform=None,
             target_transform=None,
             download_and_create=True,
-            chunk_size = 500):
+            chunk_size = 500,
+            dt = 1000):
 
         self.n = 0
         self.nclasses = self.num_classes = 10
         self.download_and_create = download_and_create
         self.root = root
         self.train = train 
+        self.dt = dt
         self.chunk_size = chunk_size
 
         super(NMNISTDataset, self).__init__(
@@ -95,7 +97,7 @@ class NMNISTDataset(NeuromorphicDataset):
             data, target = sample(
                     f,
                     key,
-                    T = self.chunk_size)
+                    T = self.chunk_size*self.dt)
 
         if self.transform is not None:
             data = self.transform(data)
@@ -112,6 +114,7 @@ def sample(hdf5_file,
     label = dset['labels'][()]
     tend = dset['times'][-1] 
     start_time = 0
+    ha = dset['times'][()]
 
     tmad = get_tmad_slice(dset['times'][()], dset['addrs'][()], start_time, T*1000)
     tmad[:,0]-=tmad[0,0]
@@ -151,12 +154,14 @@ def create_datasets(
     train_ds = NMNISTDataset(root,train=True,
                                  transform = transform_train, 
                                  target_transform = target_transform_train, 
-                                 chunk_size = chunk_size_train)
+                                 chunk_size = chunk_size_train,
+                                 dt = dt)
 
     test_ds = NMNISTDataset(root, transform = transform_test, 
                                  target_transform = target_transform_test, 
                                  train=False,
-                                 chunk_size = chunk_size_test)
+                                 chunk_size = chunk_size_test,
+                                 dt = dt)
 
     return train_ds, test_ds
 

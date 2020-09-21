@@ -150,7 +150,7 @@ def load_jaer(datafile='/tmp/aerout.dat', length=0, version='aedat', debug=1, ca
 
 
 
-def plot_frames_imshow(images, labels, nim=11, avg=50, do1h = True, transpose=False, label_mapping=None):
+def plot_frames_imshow(images, labels=None, nim=11, avg=50, do1h = True, transpose=False, label_mapping=None):
     import pylab as plt
     plt.figure(figsize = [nim+2,16])
     import matplotlib.gridspec as gridspec
@@ -159,10 +159,13 @@ def plot_frames_imshow(images, labels, nim=11, avg=50, do1h = True, transpose=Fa
     else:
         gs = gridspec.GridSpec(nim, images.shape[1]//avg)
     plt.subplots_adjust(left=0, bottom=0, right=1, top=0.95, wspace=.0, hspace=.04)
-    if do1h:
-        categories = labels.argmax(axis=1)
+    if labels is not None:
+        if do1h:
+            categories = labels.argmax(axis=1)
+        else:
+            categories = labels
     else:
-        categories = labels
+        categories = range(len(images))
     s=[]
     for j in range(nim):
          for i in range(images.shape[1]//avg):

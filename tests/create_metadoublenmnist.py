@@ -41,18 +41,22 @@ if __name__ == "__main__":
         transform = Compose([
             CropDims(low_crop=[0,0], high_crop=[32,32], dims=[2,3]),
             Downsample(factor=[dt,1,ds,ds]),
-            ToEventSum(T = chunk_size, size = size),
+            #ToEventSum(T = chunk_size, size = size),
+            ToCountFrame(T = chunk_size, size = size),
             ToTensor()])
 
     if target_transform is None:
         target_transform = Compose([Repeat(chunk_size), toOneHot(nclasses)])
 
-    cc = DoubleNMNIST(root = root, meta_val=True, transform = transform, target_transform = target_transform, chunk_size=chunk_size,  num_classes_per_task=5)
-    cd = ClassNMNISTDataset(root,meta_train=True, transform = transform, target_transform = target_transform, chunk_size=chunk_size)
+    cc = DoubleNMNIST(root = root, meta_test=True, transform = transform, target_transform = target_transform, chunk_size=chunk_size,  num_classes_per_task=5)
+    #cd = ClassNMNISTDataset(root,meta_train=True, transform = transform, target_transform = target_transform, chunk_size=chunk_size)
 
-    it = BatchMetaDataLoader(ClassSplitter(cc, shuffle=True, num_train_per_class=3, num_test_per_class=3), batch_size=16, num_workers=0)
+    dmnist_it = BatchMetaDataLoader(ClassSplitter(cc, shuffle=True, num_train_per_class=3, num_test_per_class=5), batch_size=16, num_workers=0)
+    sample = next(iter(dmnist_it))
+    data,targets = sample['train']
 
-    from torchmeta.datasets.doublemnist import DoubleMNISTClassDataset
-    dataset = DoubleMNISTClassDataset("data/",meta_train=True)
-    dataset_h = BatchMetaDataLoader(doublemnist("data/",meta_train=True, ways=5, shots=10), batch_size=16, num_workers=0)
+    ##Load torchmeta MNIST for comparison
+    #from torchmeta.datasets.doublemnist import DoubleMNISTClassDataset
+    #dataset = DoubleMNISTClassDataset("data/",meta_train=True)
+    #dataset_h = BatchMetaDataLoader(doublemnist("data/",meta_train=True, ways=5, shots=10), batch_size=16, num_workers=0)
 

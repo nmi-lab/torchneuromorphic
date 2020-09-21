@@ -33,15 +33,13 @@ mapping = { 0 :'0',
             8 :'8',
             9 :'9'}
 
+# Splits used for the double MNIST task https://github.com/shaohua0116/MultiDigitMNIST
 splits = {}
 splits['train'] = ['00', '01', '04', '05', '06', '08', '09', '11', '12', '13', '14', '15', '16', '18', '19', '20', '21', '23', '24', '26', '28', '29', '30', '31', '33', '35', '37', '38', '41', '42', '43', '44', '45', '50', '51', '53', '54', '56', '59', '60', '62', '63', '65', '69', '70', '72', '74', '75', '76', '77', '79', '81', '82', '84', '85', '87', '88', '89', '90', '91', '94', '95', '97', '98']
 splits['val'] = ['03', '07', '10', '22', '27', '34', '39', '40', '48', '52', '58', '61', '64', '71', '93', '99']
 splits['test'] = ['02', '17', '25', '32', '36', '46', '47', '49', '55', '57', '66', '67', '68', '73', '78', '80', '83', '86', '92', '96']
 
-
-
 class DoubleNMNISTClassDataset(NeuromorphicDataset):
-
     def __init__(
             self, 
             root : str,
@@ -72,13 +70,8 @@ class DoubleNMNISTClassDataset(NeuromorphicDataset):
         ll = self.labels_left
         lr = self.labels_right
 
-
-
         #self.labels.append( np.repeat(self.labels_u, self.samples_per_class))
         #self.labels_map.append( dict(zip(np.unique(self.labels[i]),np.arange(self.nclasses))))
-
-
-
 
         super(DoubleNMNISTClassDataset, self).__init__(root = None,
                                             transform=transform,
@@ -116,7 +109,7 @@ class DoubleNMNISTClassDataset(NeuromorphicDataset):
         data[:, :, :size_x, r1:r1+size_y] = data_l
         data[:, :, size_x:, r2:r2+size_y] = data_r
         target = self.label_u
-        return data[0], self.target_transform(target)
+        return data, self.target_transform(target)
 
 
 
@@ -136,6 +129,7 @@ class ClassNMNISTDataset(torchmeta.utils.data.ClassDataset):
             split_name = 'val'
         if meta_test:
             split_name = 'test'
+        self.split_name = split_name
 
         self.transform = transform
 
@@ -161,7 +155,7 @@ class ClassNMNISTDataset(torchmeta.utils.data.ClassDataset):
 
     def __getitem__(self, index):
         label = self._labels[index]
-        d = DoubleNMNISTClassDataset(root ='data/nmnist/n_mnist.hdf5', train= self.meta_train, label_u = index, transform = self.transform, target_transform = None, chunk_size = self.chunk_size)
+        d = DoubleNMNISTClassDataset(root ='data/nmnist/n_mnist.hdf5', train= self.meta_train, label_u = label, transform = self.transform, target_transform = None, chunk_size = self.chunk_size)
         d.index = index
         #d.target_transform_append = lambda x: None
         return d
