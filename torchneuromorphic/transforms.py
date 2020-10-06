@@ -40,7 +40,7 @@ class Downsample(object):
         return tmad//self.factor
 
     def __repr__(self):
-        return self.__class__.__name__ + '()'
+        return self.__class__.__name__ + '(dt = {0}, dp = {1}, dx = {2}, dy = {3})'
 
 class Crop(object):
     def __init__(self, low_crop, high_crop):
@@ -154,7 +154,7 @@ class ToCountFrame(object):
         idx_start = 0
         idx_end = 0
         for i, t in enumerate(ts):
-            idx_end += find_first(times[idx_end:], t)
+            idx_end += find_first(times[idx_end:], t+1)
             if idx_end > idx_start:
                 ee = addrs[idx_start:idx_end]
                 i_pol_x_y = (i, ee[:, 0], ee[:, 1], ee[:, 2])
