@@ -104,7 +104,6 @@ class NMNISTDataset(NeuromorphicDataset):
 
         if self.target_transform is not None:
             target = self.target_transform(target)
-
         return data, target
 
 def sample(hdf5_file,

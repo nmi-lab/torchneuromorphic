@@ -19,5 +19,5 @@ if __name__ == "__main__":
             batch_size=64,
             ds=4,
             num_workers=0)
-    ho = iter(test_dl)
+    ho = iter(train_dl)
     frames, labels = next(ho)

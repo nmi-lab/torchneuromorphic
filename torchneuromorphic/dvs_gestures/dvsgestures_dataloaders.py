@@ -44,13 +44,15 @@ class DVSGestureDataset(NeuromorphicDataset):
             transform=None,
             target_transform=None,
             download_and_create=True,
-            chunk_size = 500):
+            chunk_size = 500,
+            return_meta = False):
 
         self.n = 0
         self.download_and_create = download_and_create
         self.root = root
         self.train = train 
         self.chunk_size = chunk_size
+        self.return_meta = return_meta
 
         super(DVSGestureDataset, self).__init__(
                 root,
@@ -80,7 +82,7 @@ class DVSGestureDataset(NeuromorphicDataset):
             if not self.train:
                 key = key + f['extra'].attrs['Ntrain']
             assert key in self.keys
-            data, target = sample(
+            data, target, meta_info = sample(
                     f,
                     key,
                     T = self.chunk_size,
@@ -92,7 +94,10 @@ class DVSGestureDataset(NeuromorphicDataset):
         if self.target_transform is not None:
             target = self.target_transform(target)
 
-        return data, target
+        if self.return_meta is True:
+            return data, target, meta_info
+        else:
+            return data, target
 
 def sample(hdf5_file,
         key,
@@ -106,9 +111,8 @@ def sample(hdf5_file,
 
     tmad = get_tmad_slice(dset['times'][()], dset['addrs'][()], start_time, T*1000)
     tmad[:,0]-=tmad[0,0]
-    return tmad[:, [0,3,1,2]], label
+    return tmad[:, [0,3,1,2]], label, dset.attrs['meta_info']
 
- 
 def create_dataloader(
         root = 'data/dvsgesture/dvs_gestures_build19.hdf5',
         batch_size = 72 ,
@@ -121,6 +125,7 @@ def create_dataloader(
         target_transform_train = None,
         target_transform_test = None,
         n_events_attention=None,
+        return_meta=False,
         **dl_kwargs):
     if ds is None:
         ds = 4
@@ -157,7 +162,8 @@ def create_dataloader(
                                 train=True,
                                 transform = transform_train, 
                                 target_transform = target_transform_train, 
-                                chunk_size = chunk_size_train)
+                                chunk_size = chunk_size_train,
+                                return_meta = return_meta)
 
     train_dl = torch.utils.data.DataLoader(train_d, batch_size=batch_size, shuffle=True, **dl_kwargs)
 
@@ -165,7 +171,8 @@ def create_dataloader(
                                transform = transform_test, 
                                target_transform = target_transform_test, 
                                train=False,
-                               chunk_size = chunk_size_test)
+                               chunk_size = chunk_size_test,
+                               return_meta = return_meta)
 
     test_dl = torch.utils.data.DataLoader(test_d, batch_size=batch_size, **dl_kwargs)
 

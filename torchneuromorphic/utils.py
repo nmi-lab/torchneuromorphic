@@ -150,14 +150,21 @@ def load_jaer(datafile='/tmp/aerout.dat', length=0, version='aedat', debug=1, ca
 
 
 
-def plot_frames_imshow(images, labels=None, nim=11, avg=50, do1h = True, transpose=False, label_mapping=None):
+def plot_frames_imshow(images, labels=None, nim=11, avg=50, interval=1, do1h = True, transpose=False, label_mapping=None):
+    from matplotlib.colors import ListedColormap, LinearSegmentedColormap
+    from matplotlib.pyplot import Normalize
+    colors = ['red', 'black', 'green']
+    cmap = LinearSegmentedColormap.from_list('name', colors)
+
+    rnge = range(0,np.maximum(images.shape[1]//avg,1),interval)
+
     import pylab as plt
     plt.figure(figsize = [nim+2,16])
     import matplotlib.gridspec as gridspec
     if not transpose:
-        gs = gridspec.GridSpec(images.shape[1]//avg, nim)
+        gs = gridspec.GridSpec(len(rnge), nim)
     else:
-        gs = gridspec.GridSpec(nim, images.shape[1]//avg)
+        gs = gridspec.GridSpec(nim, len(rnge))
     plt.subplots_adjust(left=0, bottom=0, right=1, top=0.95, wspace=.0, hspace=.04)
     if labels is not None:
         if do1h:
@@ -168,19 +175,21 @@ def plot_frames_imshow(images, labels=None, nim=11, avg=50, do1h = True, transpo
         categories = range(len(images))
     s=[]
     for j in range(nim):
-         for i in range(images.shape[1]//avg):
+         norm = Normalize(-images[j].mean()*30,images[j].mean()*30)
+         for e,i in enumerate(rnge):
              if not transpose:
-                 ax = plt.subplot(gs[i, j])
+                 ax = plt.subplot(gs[e, j])
              else:
-                 ax = plt.subplot(gs[j, i])
-             plt.imshow(images[j,i*avg:(i*avg+avg),0,:,:].sum(axis=0).T)
+                 ax = plt.subplot(gs[j, e])
+             plt.imshow(images[j,i*avg:(i*avg+avg),0,:,:].mean(axis=0).T -images[j,i*avg:(i*avg+avg),1,:,:].mean(axis=0).T, cmap=cmap, norm= norm)
              plt.xticks([])
 
              if i==0 and label_mapping is not None:
                  plt.title(label_mapping[int(categories[j])], fontsize=10)
              plt.yticks([])
-             plt.gray()
          s.append(images[j].sum())
+
+
 
 def aedat_to_events(filename):
     label_filename = filename[:-6] +'_labels.csv'
