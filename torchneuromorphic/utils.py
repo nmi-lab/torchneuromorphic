@@ -11,6 +11,20 @@
 #-----------------------------------------------------------------------------
 import struct
 import numpy as np
+import scipy.io as sio
+
+# For loading data from matlab files, in this case dvssign data
+def load_mat(filename):
+    data_dict = sio.loadmat(filename)
+    
+    # The keys are: ['__globals__', '__header__', '__version__', 'pol', 'ts', 'x', 'y']
+    all_ts = data_dict['ts'].squeeze()
+    all_x = data_dict['x'].squeeze()
+    all_y = data_dict['y'].squeeze()
+    all_p = data_dict['pol'].squeeze()
+    
+    return all_ts, all_x, all_y, all_p
+    
 
 # adapted from https://github.com/gorchard/event-Python/blob/master/eventvision.py
 def load_ATIS_bin(filename):
