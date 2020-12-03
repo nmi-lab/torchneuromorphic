@@ -221,11 +221,12 @@ class FilterEvents(object):
             return Y
 
 class ExpFilterEvents(FilterEvents):
-    def __init__(self, chunk_size, tau=200, channels=2, tpad = None, device='cpu', **kwargs):
-        t = torch.arange(0.,np.minimum(5.*tau,chunk_size),1.)
+    def __init__(self, length, tau=200, channels=2, tpad = None, device='cpu', **kwargs):
+        t = torch.arange(0.,length,1.)
         kernel = torch.ones(channels, 1, len(t), 1, 1)
         exp_kernel = torch.exp(-t/tau)
         exp_kernel/=exp_kernel.sum()
+        exp_kernel=torch.flip(exp_kernel,[0]) #Conv3d is cross correlation not convolution
         groups = 2
 
         for i in range(channels):
