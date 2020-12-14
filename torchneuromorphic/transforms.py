@@ -17,6 +17,43 @@ from torchvision.transforms import Compose,ToTensor,Normalize,Lambda
 def find_first(a, tgt):
     return bisect.bisect_left(a, tgt)
 
+class Jitter(object):
+    def __init__(self, xs=2,ys=2,th=30, size=[2, 32, 32]):
+        self.xs = xs
+        self.ys = ys
+        self.th = th
+        self.size = size
+        
+    def __call__(self, data):
+        if self.xs == 0 and self.ys==0 and self.th==0:
+            return data # not jittering events
+    
+        xjitter = np.random.randint(2 * self.xs) - self.xs # random jitter in x direction
+        yjitter = np.random.randint(2 * self.ys) - self.ys # random jitter in y direction
+        ajitter = (np.random.rand() - 0.5) * self.th / 180 * np.pi # amplitude? random jitter for rotation
+        sinTh = np.sin(ajitter) 
+        cosTh = np.cos(ajitter)
+
+        jittered = torch.zeros((data.shape[0],data.shape[1],self.size[0],self.size[1],self.size[2]))
+
+        for x in range(self.size[1]):
+            for y in range(self.size[2]):
+                xnew = round(x*cosTh - y*sinTh + xjitter)
+                if xnew < 0:
+                    xnew = 0
+                if xnew > self.size[1]-1:
+                    xnew=self.size[1]-1
+                ynew = round(x*sinTh + y*cosTh + yjitter)
+                if ynew < 0:
+                    ynew = 0
+                if ynew > self.size[2]-1:
+                    ynew=self.size[2]-1
+
+                jittered[:,:,:,xnew,ynew] = data[:,:,:,x,y]
+        return jittered
+        
+    
+
 class toOneHot(object):
     def __init__(self, num_classes):
         self.num_classes = num_classes
