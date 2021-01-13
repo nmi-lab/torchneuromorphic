@@ -45,7 +45,8 @@ class DVSGestureDataset(NeuromorphicDataset):
             target_transform=None,
             download_and_create=True,
             chunk_size = 500,
-            return_meta = False):
+            return_meta = False,
+            time_shuffle=False):
 
         self.n = 0
         self.download_and_create = download_and_create
@@ -53,6 +54,7 @@ class DVSGestureDataset(NeuromorphicDataset):
         self.train = train 
         self.chunk_size = chunk_size
         self.return_meta = return_meta
+        self.time_shuffle = time_shuffle
 
         super(DVSGestureDataset, self).__init__(
                 root,
@@ -80,13 +82,13 @@ class DVSGestureDataset(NeuromorphicDataset):
         #Important to open and close in getitem to enable num_workers>0
         with h5py.File(self.root, 'r', swmr=True, libver="latest") as f:
             if not self.train:
-                key = key + f['extra'].attrs['Ntrain']
+                key = key + f['extra'].attrs['Ntrain'] 
             assert key in self.keys
-            data, target, meta_info = sample(
+            data, target, meta_info_light, meta_info_user = sample(
                     f,
                     key,
                     T = self.chunk_size,
-                    shuffle=self.train)
+                    shuffle=self.time_shuffle)#self.train)
 
         if self.transform is not None:
             data = self.transform(data)
@@ -95,7 +97,7 @@ class DVSGestureDataset(NeuromorphicDataset):
             target = self.target_transform(target)
 
         if self.return_meta is True:
-            return data, target, meta_info
+            return data, target, meta_info_light, meta_info_user
         else:
             return data, target
 
@@ -108,10 +110,11 @@ def sample(hdf5_file,
     tbegin = dset['times'][0]
     tend = np.maximum(0,dset['times'][-1]- 2*T*1000 )
     start_time = np.random.randint(tbegin, tend) if shuffle else 0
-
+    #print(start_time)
     tmad = get_tmad_slice(dset['times'][()], dset['addrs'][()], start_time, T*1000)
     tmad[:,0]-=tmad[0,0]
-    return tmad[:, [0,3,1,2]], label, dset.attrs['meta_info']
+    meta = eval(dset.attrs['meta_info'])
+    return tmad[:, [0,3,1,2]], label, meta['light condition'], meta['subject']
 
 def create_dataloader(
         root = 'data/dvsgesture/dvs_gestures_build19.hdf5',
@@ -126,6 +129,8 @@ def create_dataloader(
         target_transform_test = None,
         n_events_attention=None,
         return_meta=False,
+        sample_shuffle=True,
+        time_shuffle=True,
         **dl_kwargs):
     if ds is None:
         ds = 4
@@ -163,16 +168,18 @@ def create_dataloader(
                                 transform = transform_train, 
                                 target_transform = target_transform_train, 
                                 chunk_size = chunk_size_train,
-                                return_meta = return_meta)
+                                return_meta = return_meta,
+                                time_shuffle=time_shuffle)
 
-    train_dl = torch.utils.data.DataLoader(train_d, batch_size=batch_size, shuffle=True, **dl_kwargs)
+    train_dl = torch.utils.data.DataLoader(train_d, batch_size=batch_size, shuffle=sample_shuffle, **dl_kwargs)
 
     test_d = DVSGestureDataset(root,
                                transform = transform_test, 
                                target_transform = target_transform_test, 
                                train=False,
                                chunk_size = chunk_size_test,
-                               return_meta = return_meta)
+                               return_meta = return_meta,
+                               time_shuffle=False)
 
     test_dl = torch.utils.data.DataLoader(test_d, batch_size=batch_size, **dl_kwargs)
 

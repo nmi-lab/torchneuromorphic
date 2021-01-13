@@ -208,9 +208,10 @@ class ToEventSum(object):
 
     Converts a numpy.ndarray (T x H x W x C) to a torch.FloatTensor of shape (C x H x W) in the range [0., 1., ...] 
     """
-    def __init__(self, T=500, size=[2, 32, 32]):
+    def __init__(self, T=500, size=[2, 32, 32], bins=1):
         self.T = T
         self.size = size
+        self.bins = bins
 
     def __call__(self, tmad):
         times = tmad[:,0]
@@ -219,17 +220,26 @@ class ToEventSum(object):
         addrs = tmad[:,1:]
 
         ts = range(0, self.T)
-        chunks = np.zeros([len(ts)] + self.size, dtype='int8')
+        chunks = np.zeros([self.bins]+[len(ts)//self.bins] + self.size, dtype='int8')
+        #print(chunks.shape)
         idx_start = 0
         idx_end = 0
+        j = 0
         for i, t in enumerate(ts):
+            #print(t)
             idx_end += find_first(times[idx_end:], t)
             if idx_end > idx_start:
                 ee = addrs[idx_start:idx_end]
-                i_pol_x_y = (i, ee[:, 0], ee[:, 1], ee[:, 2])
-                np.add.at(chunks, i_pol_x_y, 1)
+                i_pol_x_y = (i-(self.T//self.bins)*j, ee[:, 0], ee[:, 1], ee[:, 2])
+                np.add.at(chunks[j], i_pol_x_y, 1)
             idx_start = idx_end
-        return chunks.sum(axis=0, keepdims=True)
+            if (t+1)%(self.T//self.bins)==0:
+                #chunks = chunks.sum(axis=1, keepdims=False)
+                j+=1
+                #print(j)
+                #print(chunks.shape)
+                
+        return chunks.sum(axis=1, keepdims=False)
 
     def __repr__(self):
         return self.__class__.__name__ + '()'
