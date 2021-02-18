@@ -155,6 +155,8 @@ def plot_frames_imshow(images, labels=None, nim=11, avg=50, interval=1, do1h = T
     from matplotlib.pyplot import Normalize
     colors = ['red', 'black', 'green']
     cmap = LinearSegmentedColormap.from_list('name', colors)
+    if avg>images.shape[1]:
+        avg = images.shape[1] 
 
     rnge = range(0,np.maximum(images.shape[1]//avg,1),interval)
 
