@@ -35,7 +35,7 @@ mapping = { 0 :'0',
 class NMNISTDataset(NeuromorphicDataset):
     resources_url = [['https://www.dropbox.com/sh/tg2ljlbmtzygrag/AABlMOuR15ugeOxMCX0Pvoxga/Train.zip?dl=1',None, 'Train.zip'],
                      ['https://www.dropbox.com/sh/tg2ljlbmtzygrag/AADSKgJ2CjaBWh75HnTNZyhca/Test.zip?dl=1', None, 'Test.zip']]
-    directory = 'data/nmnist/'
+    directory = '/home/kennetms/Documents/accenture-gesture-learning-v2/VAE/data/nmnist/'
     resources_local = [directory+'Train', directory+'Test']
 
     def __init__(
@@ -178,7 +178,7 @@ def create_dataloader(
         **dl_kwargs):
 
     train_d, test_d = create_datasets(
-        root = 'data/nmnist/n_mnist.hdf5',
+        root = root,
         batch_size = batch_size,
         chunk_size_train = chunk_size_train,
         chunk_size_test = chunk_size_test,
