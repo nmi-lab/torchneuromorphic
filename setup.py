@@ -30,5 +30,6 @@ setup(
         "scipy>=1.0",
         "h5py",
         "pandas",
+        "dv",
     ]
 )

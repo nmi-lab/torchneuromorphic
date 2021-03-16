@@ -191,9 +191,28 @@ def plot_frames_imshow(images, labels=None, nim=11, avg=50, interval=1, do1h = T
              plt.yticks([])
          s.append(images[j].sum())
 
+def legacy_aedat_to_events(filename, normalize_time = True):
+    '''
+    Uses the dv package to extract events from aedat 2 and aedat 3
+    '''
+    from dv import LegacyAedatFile
+    events=[]
+
+    with LegacyAedatFile(filename) as f:
+        for event in f:
+            events.append([event.timestamp,event.polarity,event.x,event.y])
+
+    events = np.column_stack(np.array(events, dtype='uint32')).T
+    if normalize_time:
+        events[:,0] -= events[0,0]
+
+    return events
 
 
 def aedat_to_events(filename):
+    '''
+    Used for aedat 3.1
+    '''
     label_filename = filename[:-6] +'_labels.csv'
     labels = np.loadtxt(label_filename, skiprows=1, delimiter=',',dtype='uint32')
     events=[]
