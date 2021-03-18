@@ -11,15 +11,22 @@
 #----------------------------------------------------------------------------- 
 from torchneuromorphic.utils import plot_frames_imshow, legacy_aedat_to_events
 import torchneuromorphic.transforms as transforms
+import pylab as plt
+import numpy as np
 import sys
 
+device = 'cuda'
 events = legacy_aedat_to_events(sys.argv[1])
 dt = 1000
-size = [2, 346, 346]
+size = [2, 346, 260]
 process_events = transforms.Compose([
             transforms.Downsample(factor=[dt,1,1,1]),
             transforms.ToCountFrame(T = 1000, size = size),
             transforms.ToTensor(),
-            transforms.ExpFilterEvents(tau=100, length=500, device='cpu')
+            transforms.ExpFilterEvents(tau=100, length=500, device=device)
             ])
 frames =  process_events(events)
+
+
+plot_frames_imshow(np.array([frames.detach().cpu().numpy()]), nim=1)
+plt.show()

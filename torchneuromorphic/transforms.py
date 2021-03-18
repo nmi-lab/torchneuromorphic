@@ -207,6 +207,7 @@ class FilterEvents(object):
             self.tpad = tpad
 
     def __call__(self, chunks):
+        chunks = chunks.to(self.kernel.device)
         if len(chunks.shape)==4:
             data = chunks.permute([1,0,2,3])
             data = data.unsqueeze(0)
