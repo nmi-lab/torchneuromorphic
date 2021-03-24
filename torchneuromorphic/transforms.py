@@ -88,9 +88,9 @@ class Crop(object):
         self.high = high_crop
 
     def __call__(self, tmad):
-        idx = np.where(np.any(tmad>high_crop, axis=1))
+        idx = np.where(np.any(tmad>self.high, axis=1))
         tmad = np.delete(tmad,idx,0)
-        idx = np.where(np.any(tmad<high_crop, axis=1))
+        idx = np.where(np.any(tmad<self.low, axis=1))
         tmad = np.delete(tmad,idx,0)
         return tmad
 
