@@ -16,7 +16,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name = "torchneuromorphic",
-    version = "0.3.3",
+    version = "0.3.4",
     author = "Emre Neftci",
     author_email = "eneftci@uci.edu",
     description = ("Dataset loaders for pytorch"),

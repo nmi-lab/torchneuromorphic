@@ -26,6 +26,13 @@ class toOneHot(object):
         y_onehot.zero_()
         return y_onehot.scatter_(1, torch.LongTensor(integers), 1)
 
+class toDtype(object):
+    def __init__(self, dtype):
+        self.dtype = dtype
+
+    def __call__(self, integers):
+        return torch.tensor(integers, dtype=self.dtype)
+
 class Downsample(object):
     """Resize the address event Tensor to the given size.
 
