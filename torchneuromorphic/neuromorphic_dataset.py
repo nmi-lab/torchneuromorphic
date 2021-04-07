@@ -89,6 +89,7 @@ def download_and_extract_archive(url, download_root, extract_root=None, filename
 def identity(x):
     return x
 
+#TODO make it a hdf5 dataset, implementing generic class NeuromorphicDataset
 class NeuromorphicDataset(data.Dataset):
     _repr_indent = 4
 

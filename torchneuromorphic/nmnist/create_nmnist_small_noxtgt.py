@@ -12,7 +12,7 @@
 from torchneuromorphic.nmnist.nmnist_dataloaders import *
 from torchneuromorphic.utils import plot_frames_imshow
 import torchneuromorphic.transforms as transforms
-from torch.utils.data import Subset, SubsetRandomSampler
+from torch.utils.data import Subset, SubsetRandomSampler, RandomSampler
 
 def create_dataloader(
         root = 'data/nmnist/n_mnist.hdf5',
@@ -57,9 +57,10 @@ def create_dataloader(
                             chunk_size = chunk_size_train)
 
 
-    train_subset_indices = train_d.keys_by_label[:,:100].reshape(-1)
+    #train_subset_indices = train_d.keys_by_label[:,:1000].reshape(-1)
+    #train_d.n=1000
 
-    train_dl = torch.utils.data.DataLoader(train_d, batch_size=batch_size, sampler=SubsetRandomSampler(train_subset_indices), **dl_kwargs)
+    train_dl = torch.utils.data.DataLoader(train_d, batch_size=batch_size, sampler=RandomSampler(range(len(train_d)), num_samples=1000, replacement=True), **dl_kwargs)
 
     test_d = NMNISTDataset(root,
                                transform = transform_test, 

@@ -149,6 +149,7 @@ class ToCountFrame(object):
     def __init__(self, T=500, size=[2, 32, 32]):
         self.T = T
         self.size = size
+        self.ndim = len(size)
 
     def __call__(self, tmad):
         times = tmad[:,0]
@@ -164,7 +165,7 @@ class ToCountFrame(object):
             idx_end += find_first(times[idx_end:], t+1)
             if idx_end > idx_start:
                 ee = addrs[idx_start:idx_end]
-                i_pol_x_y = (i, ee[:, 0], ee[:, 1], ee[:, 2])
+                i_pol_x_y = [i] + [ee[:, j] for j in range(self.ndim)]
                 np.add.at(chunks, i_pol_x_y, 1)
             idx_start = idx_end
         return chunks
