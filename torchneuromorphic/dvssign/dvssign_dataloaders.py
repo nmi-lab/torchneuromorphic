@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #-----------------------------------------------------------------------------
-# Author: Emre Neftci
+# Author: Kenneth Stewart and Emre Neftci
 #
 # Creation Date : Fri 01 Dec 2017 10:05:17 PM PST
 # Last Modified : Sun 29 Jul 2018 01:39:06 PM PDT
@@ -23,6 +23,7 @@ import os
 
 NUM_CLASSES = 24 # A-Y excluding j
 
+# dataset is huge so only use first 10 letters
 mapping = { 'a':0,
             'b':1,
             'c':2,
@@ -77,7 +78,7 @@ class DVSSignDataset(NeuromorphicDataset):
     directory = 'data/ASL-DVS/'#'data/nmnist/'
     resources_local = [directory+'a', directory+'b', directory+'c', directory+'d',directory+'e',directory+'f',directory+'g',directory+'h',directory+'i',
                       directory+'k',directory+'l',directory+'m',directory+'n',directory+'o',directory+'p',directory+'q',directory+'r',directory+'s',
-                      directory+'t',directory+'u',directory+'v',directory+'w',directory+'x',directory+'y',directory+'z']
+                      directory+'t',directory+'u',directory+'v',directory+'w',directory+'x',directory+'y']
 
     def __init__(
             self, 
@@ -110,7 +111,7 @@ class DVSSignDataset(NeuromorphicDataset):
                     self.n = f['extra'].attrs['Ntest']
                     self.keys = f['extra']['test_keys'][()]
                     self.keys_by_label = f['extra']['test_keys_by_label'][()]
-                    self.keys_by_label[:,:] -= self.keys_by_label[0,0] #normalize
+                    #self.keys_by_label[:,:] -= self.keys_by_label[0,0] #normalize
             except AttributeError:
                 print('Attribute not found in hdf5 file. You may be using an old hdf5 build. Delete {0} and run again'.format(root))
                 raise
@@ -159,7 +160,7 @@ def sample(hdf5_file,
     return tmad, label
 
 def create_datasets(
-        root = 'data/dvssign/dvssign.hdf5',
+        root = 'data/ASL-DVS/dvssign.hdf5',
         batch_size = 72 ,
         chunk_size_train = 300,
         chunk_size_test = 300,
@@ -202,7 +203,7 @@ def create_datasets(
     return train_ds, test_ds
 
 def create_dataloader(
-        root = 'data/dvssign/dvssign.hdf5',
+        root = 'data/ASL-DVS/dvssign.hdf5',
         batch_size = 72 ,
         chunk_size_train = 100,
         chunk_size_test = 100,

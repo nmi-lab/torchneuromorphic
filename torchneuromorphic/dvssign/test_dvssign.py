@@ -26,6 +26,13 @@ if __name__ == "__main__":
     iter_meta_test = iter(test_dl)
     frames_train, labels_train = next(iter_meta_train)
     frames_test , labels_test  = next(iter_meta_test)
+    
+    with h5py.File('data/ASL-DVS/dvssign.hdf5', 'r', swmr=True, libver="latest") as f:
+            if 1:
+                key = f['extra']['train_keys'][2]
+                print(key)
+            else:
+                key = f['extra']['test_keys'][0]
 
     print(frames_train.shape)
     print(labels_train.shape)

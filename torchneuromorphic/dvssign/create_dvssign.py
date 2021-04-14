@@ -12,11 +12,13 @@
 from torchneuromorphic.dvssign.dvssign_dataloaders import *
 
 if __name__ == "__main__":
-    DVSSignDataset = DVSSignDataset(root='/home/kennetms/Documents/torchneuromorphic/torchneuromorphic/data/ASL-DVS/dvssign.hdf5')
     
-    #out = create_events_hdf5('/home/kennetms/Documents/torchneuromorphic/torchneuromorphic/data/ASL-DVS', '/home/kennetms/Documents/torchneuromorphic/torchneuromorphic/data/ASL-DVS/dvssign.hdf5')
+    out = create_events_hdf5('/home/kennetms/Documents/torchneuromorphic/torchneuromorphic/dvssign/data/ASL-DVS', '/home/kennetms/Documents/torchneuromorphic/torchneuromorphic/dvssign/data/ASL-DVS/dvssign.hdf5')
+    
+    DVSSignDataset = DVSSignDataset(root='/home/kennetms/Documents/torchneuromorphic/torchneuromorphic/dvssign/data/ASL-DVS/dvssign.hdf5')
+    
 
-    f = h5py.File('/home/kennetms/Documents/torchneuromorphic/torchneuromorphic/data/ASL-DVS/dvssign.hdf5', 'r')
+    f = h5py.File('/home/kennetms/Documents/torchneuromorphic/torchneuromorphic/dvssign/data/ASL-DVS/dvssign.hdf5', 'r')
     
     print(list(f.keys()))
     

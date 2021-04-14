@@ -15,14 +15,14 @@ import scipy.misc
 import h5py
 import glob
 import torch.utils.data
-from ..events_timeslices import *
-from ..utils import *
+from torchneuromorphic.events_timeslices import *
+from torchneuromorphic.utils import *
 import os
 
 from collections import namedtuple, defaultdict
 import torch
 import torch.utils.data
-from ..utils import load_ATIS_bin, load_jaer
+from torchneuromorphic.utils import load_ATIS_bin, load_jaer
 
 NUM_CLASSES = 24 # A-Y excluding j
 
@@ -73,6 +73,8 @@ def sign_get_file_names(dataset_path):
     num_test = 100 #840
     os.chdir(dataset_path+'/a')
     for key in mapping.keys():
+        #if mapping[key] > 9:
+        #    continue
         os.chdir('../'+key)
         curr_dir = os.getcwd()
         # each class has 4200 samples.
@@ -80,14 +82,14 @@ def sign_get_file_names(dataset_path):
         num_samples = 1
         for file in glob.glob("*.mat"):
             label = file.split('_')[0]
-
+ 
             if num_samples < num_train:
                 if label in sign_dict_train.keys():
                     sign_dict_train[label].append(curr_dir+'/'+file)
                 else:
                     sign_dict_train[label] = []
                     sign_dict_train[label].append(curr_dir+'/'+file)
-            if num_samples < num_train+num_test:
+            elif num_samples < num_train+num_test:
                 if label in sign_dict_test.keys():
                     sign_dict_test[label].append(curr_dir+'/'+file)
                 else:
@@ -125,44 +127,55 @@ def create_events_hdf5(directory, hdf5_filename):
         metas = []
         data_grp = f.create_group('data')
         extra_grp = f.create_group('extra')
+        is_train = True
         for key in tqdm(fns_train.keys()):
-            for file_d in fns_train.values():
-                for i in range(len(file_d)):
-                    data = sign_load_events_from_mat(file_d[i])
-                    times = data[:,0]
-                    addrs = data[:,1:]
-                    label = mapping[key] #int(file_d.split('/')[-2]) 
+            print("This is the key", key)
+            #if mapping[key] > 9:
+            #    break
+            for file_d in fns_train[key]:#.values():
+                #for i in range(len(file_d)):
+                data = sign_load_events_from_mat(file_d)
+                times = data[:,0]
+                addrs = data[:,1:]
+                label = mapping[key] #int(file_d.split('/')[-2]) 
 
-                    train_keys.append(num)
+                train_keys.append(num)
 
-                    train_label_list[mapping[key]].append(num)
+                train_label_list[mapping[key]].append(num)
 
-                    metas.append({'key':str(num), 'training sample':True}) 
-                    subgrp = data_grp.create_group(str(num))
-                    tm_dset = subgrp.create_dataset('times' , data=times, dtype = np.uint32)
-                    ad_dset = subgrp.create_dataset('addrs' , data=addrs, dtype = np.uint8)
-                    lbl_dset= subgrp.create_dataset('labels', data=label, dtype = np.uint8)
-                    subgrp.attrs['meta_info']= str(metas[-1])
-                    num += 1
+                metas.append({'key':str(num), 'training sample':True}) 
+                subgrp = data_grp.create_group(str(num))
+                tm_dset = subgrp.create_dataset('times' , data=times, dtype = np.uint32)
+                ad_dset = subgrp.create_dataset('addrs' , data=addrs, dtype = np.uint8)
+                lbl_dset= subgrp.create_dataset('labels', data=label, dtype = np.uint8)
+                subgrp.attrs['meta_info']= str(metas[-1])
+                num += 1
                 
-            for file_d in fns_test.values():
-                for i in range(len(file_d)):
-                    data = sign_load_events_from_mat(file_d[i])
-                    times = data[:,0]
-                    addrs = data[:,1:]
-                    label = mapping[key]
+        for key in tqdm(fns_test.keys()):
+            print("This is the key test", key)
+            #if mapping[key] > 9:
+            #    break
+            for file_d in fns_test[key]:#.values():
+                #for i in range(len(file_d)):
+                data = sign_load_events_from_mat(file_d)
+                times = data[:,0]
+                addrs = data[:,1:]
+                label = mapping[key]
 
-                    test_keys.append(num)
+                test_keys.append(num)
 
-                    test_label_list[mapping[key]].append(num)
+                test_label_list[mapping[key]].append(num)
 
-                    metas.append({'key':str(num), 'testing sample':True}) 
-                    subgrp = data_grp.create_group(str(num))
-                    tm_dset = subgrp.create_dataset('times' , data=times, dtype = np.uint32)
-                    ad_dset = subgrp.create_dataset('addrs' , data=addrs, dtype = np.uint8)
-                    lbl_dset= subgrp.create_dataset('labels', data=label, dtype = np.uint8)
-                    subgrp.attrs['meta_info']= str(metas[-1])
-                    num += 1
+                metas.append({'key':str(num), 'testing sample':True}) 
+                subgrp = data_grp.create_group(str(num))
+                tm_dset = subgrp.create_dataset('times' , data=times, dtype = np.uint32)
+                ad_dset = subgrp.create_dataset('addrs' , data=addrs, dtype = np.uint8)
+                lbl_dset= subgrp.create_dataset('labels', data=label, dtype = np.uint8)
+                subgrp.attrs['meta_info']= str(metas[-1])
+                num += 1
+                
+        print(len(train_keys))
+        print(len(test_keys))
                 
         extra_grp.create_dataset('train_keys', data = train_keys)
         extra_grp.create_dataset('train_keys_by_label', data = train_label_list)
