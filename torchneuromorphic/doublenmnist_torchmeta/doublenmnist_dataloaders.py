@@ -178,7 +178,7 @@ class DoubleNMNIST(torchmeta.utils.data.CombinationMetaDataset):
         dataset = ClassNMNISTDataset(root,
             meta_train=meta_train, meta_val=meta_val,
             meta_test=meta_test, meta_split=meta_split, transform=transform,
-            class_augmentations=class_augmentations, download=download,chunk_size=300)
+            class_augmentations=class_augmentations, download=download,chunk_size=chunk_size)
 
         super(DoubleNMNIST, self).__init__(dataset, num_classes_per_task,
             target_transform=target_transform,
