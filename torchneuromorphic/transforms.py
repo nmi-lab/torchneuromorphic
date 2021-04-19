@@ -12,10 +12,15 @@
 import numpy as np
 import pandas as pd
 import torch, bisect
+import warnings
 from torchvision.transforms import Compose,ToTensor,Normalize,Lambda
 
 def find_first(a, tgt):
     return bisect.bisect_left(a, tgt)
+
+def shuffle_along_axis(a, axis):
+    idx = np.random.rand(*a.shape).argsort(axis=axis)
+    return np.take_along_axis(a,idx,axis=axis)
 
 class toOneHot(object):
     def __init__(self, num_classes):
@@ -49,19 +54,41 @@ class Downsample(object):
     def __repr__(self):
         return self.__class__.__name__ + '(dt = {0}, dp = {1}, dx = {2}, dy = {3})'
 
-class Crop(object):
-    def __init__(self, low_crop, high_crop):
-        '''
-        Crop all dimensions
-        '''
-        self.low = low_crop
-        self.high = high_crop
+#class Crop(object):
+#    def __init__(self, low_crop, high_crop):
+#        '''
+#        Crop all dimensions
+#        '''
+#        self.low = low_crop
+#        self.high = high_crop
+#
+#    def __call__(self, tmad):
+#        idx = np.where(np.any(tmad>high_crop, axis=1))
+#        tmad = np.delete(tmad,idx,0)
+#        idx = np.where(np.any(tmad<high_crop, axis=1))
+#        tmad = np.delete(tmad,idx,0)
+#        return tmad
+#
+#    def __repr__(self):
+#        return self.__class__.__name__ + '()'
+
+class ShuffleMask(object):
+    '''
+    Shuffles events within t_min and t_max with a Random spike train having the same number of events
+    '''
+    def __init__(self, t_min, t_max, size=[2,32,32]):
+        from decolle.snn_utils import spiketrains
+        self.generator = spiketrains
+        self.t_min = t_min
+        self.t_max = t_max
+        self.size = size
 
     def __call__(self, tmad):
-        idx = np.where(np.any(tmad>high_crop, axis=1))
-        tmad = np.delete(tmad,idx,0)
-        idx = np.where(np.any(tmad<high_crop, axis=1))
-        tmad = np.delete(tmad,idx,0)
+        idx = np.where((tmad[:,0]>=self.t_min) * (tmad[:,0]<self.t_max))
+        for i in range(1,tmad.shape[1]):
+            #tmad[idx,i] = shuffle_along_axis(tmad[idx,i][0],0)
+            tmad[idx,i] = np.random.randint(low=0,high=self.size[i-1],size=len(idx[0]))
+
         return tmad
 
     def __repr__(self):
@@ -165,8 +192,9 @@ class ToCountFrame(object):
             idx_end += find_first(times[idx_end:], t+1)
             if idx_end > idx_start:
                 ee = addrs[idx_start:idx_end]
-                i_pol_x_y = [i] + [ee[:, j] for j in range(self.ndim)]
+                i_pol_x_y = tuple([i] + [ee[:, j] for j in range(self.ndim)])
                 np.add.at(chunks, i_pol_x_y, 1)
+                raise
             idx_start = idx_end
         return chunks
 
@@ -197,7 +225,7 @@ class ToEventSum(object):
             idx_end += find_first(times[idx_end:], t)
             if idx_end > idx_start:
                 ee = addrs[idx_start:idx_end]
-                i_pol_x_y = (i, ee[:, 0], ee[:, 1], ee[:, 2])
+                i_pol_x_y = tuple([i] + [ee[:, j] for j in range(self.ndim)])
                 np.add.at(chunks, i_pol_x_y, 1)
             idx_start = idx_end
         return chunks.sum(axis=0, keepdims=True)

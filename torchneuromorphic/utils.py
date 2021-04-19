@@ -177,7 +177,7 @@ def plot_frames_imshow(images, labels=None, nim=11, avg=50, interval=1, do1h = T
         categories = range(len(images))
     s=[]
     for j in range(nim):
-         norm = Normalize(-images[j].mean()*30,images[j].mean()*30)
+         norm = Normalize(-.1,.1)
          for e,i in enumerate(rnge):
              if not transpose:
                  ax = plt.subplot(gs[e, j])
