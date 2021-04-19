@@ -194,7 +194,6 @@ class ToCountFrame(object):
                 ee = addrs[idx_start:idx_end]
                 i_pol_x_y = tuple([i] + [ee[:, j] for j in range(self.ndim)])
                 np.add.at(chunks, i_pol_x_y, 1)
-                raise
             idx_start = idx_end
         return chunks
 
