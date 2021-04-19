@@ -24,6 +24,10 @@ import os
 import torchmeta
 from torchmeta.transforms import Categorical
 
+import random
+
+# Data taken from https://github.com/PIX2NVS/NVS2Graph
+
 
 NUM_CLASSES = 24 # A-Y excluding j
 
@@ -52,15 +56,53 @@ mapping = { 'a':0,
             'x':22,
             'y':23}
 
-# splits = {}
-# splits['train'] = ['aa', 'ab', 'ae', 'af', 'ag', 'ai', 'ak', 'bb', 'bc', 'bd', 'be', 'bf', 'bg', 'bi', 'bk', 'ca', 'cb', 'cd', 'ce', 'cg', 'ci', 'ck', 'da', 'db', 'dd', 'df', 'dh', 'di', 'eb', 'ec', 'ed', 'ee', 'ef', 'fa', 'fb', 'fd', 'fe', 'fg', 'fk', 'ga', 'gc', 'gd', 'gf', 'gk', 'ha', 'hc', 'he', 'hf', 'hg', 'hh', 'hk', 'ib', 'ic', 'ie', 'if', 'ih', 'ii', 'ik', 'ka', 'kb', 'ke', 'kf', 'kh', 'ki']
-# splits['val'] = ['ad', 'ah', 'ba', 'cc', 'ch', 'de', 'dk', 'ea', 'ei', 'fc', 'fi', 'gb', 'ge', 'hb', 'kd', 'kk']
-# splits['test'] = ['ac', 'bh', 'cf', 'dc', 'dg', 'eg', 'eh', 'ek', 'ff', 'fh', 'gg', 'gh', 'gi', 'hd', 'hi', 'ia', 'id', 'ig', 'kc', 'kg']
+double_digit_letters = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
 
-splits = {}
-splits['train'] = ['00', '01', '04', '05', '06', '08', '09', '11', '12', '13', '14', '15', '16', '18', '19', '20', '21', '23', '24', '26', '28', '29', '30', '31', '33', '35', '37', '38', '41', '42', '43', '44', '45', '50', '51', '53', '54', '56', '59', '60', '62', '63', '65', '69', '70', '72', '74', '75', '76', '77', '79', '81', '82', '84', '85', '87', '88', '89', '90', '91', '94', '95', '97', '98']
-splits['val'] = ['03', '07', '10', '22', '27', '34', '39', '40', '48', '52', '58', '61', '64', '71', '93', '99']
-splits['test'] = ['02', '17', '25', '32', '36', '46', '47', '49', '55', '57', '66', '67', '68', '73', '78', '80', '83', '86', '92', '96']
+
+# NOTE: These splits only use the first 10 classes. Will need to incorporate the double digit classes for more possible meta tasks
+#splits = {}
+# splits['train'] = ['00', '01', '04', '05', '06', '08', '09', '11', '12', '13', '14', '15', '16', '18', '19', '20', '21', '23', '24', '26', '28', '29', '30', '31', '33', '35', '37', '38', '41', '42', '43', '44', '45', '50', '51', '53', '54', '56', '59', '60', '62', '63', '65', '69', '70', '72', '74', '75', '76', '77', '79', '81', '82', '84', '85', '87', '88', '89', '90', '91', '94', '95', '97', '98']
+# splits['val'] = ['03', '07', '10', '22', '27', '34', '39', '40', '48', '52', '58', '61', '64', '71', '93', '99']
+# splits['test'] = ['02', '17', '25', '32', '36', '46', '47', '49', '55', '57', '66', '67', '68', '73', '78', '80', '83', '86', '92', '96']
+
+# These splits use all of the letters i.e. all 24 classes for a possible 576 tasks. Actually, why don't I make a way to randomize the splits to make it so that all 576 possible tasks really are used and not a subset. 
+
+def split_generator():
+    splits = {}
+    
+    splits['train'] = []
+    splits['val'] = []
+    splits['test'] = []
+    
+    label_combos = []
+    
+    # create list of possible digit label combos
+    for i in range(24):
+        for j in range(24):
+            combo = str(i) + "." + str(j)
+            
+            label_combos.append(combo)
+            
+    print(len(label_combos))
+            
+    # randomly shuffle the combos
+    random.shuffle(label_combos)
+    
+    # generate a train, val, and test dataset from the possible class configurations
+    for i in range(len(label_combos)):
+        if i < 369:
+            # put in training
+            splits['train'].append(label_combos[i])
+            
+        elif i < (369+92):
+            # put in val
+            splits['val'].append(label_combos[i])
+        else:
+            # put in test
+            splits['test'].append(label_combos[i])
+            
+    return splits
+    
 
 class DoubleDVSSignClassDataset(NeuromorphicDataset):
 #     resources_url = [['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AAB0jgWqXDn3sZB_YXEjZLv4a/Yin%20Bi%20-%20a.zip?dl=0',None, 'Yin Bi - a.zip'],
@@ -117,8 +159,12 @@ class DoubleDVSSignClassDataset(NeuromorphicDataset):
 
 
         lu = self.label_u
-        self.labels_left = lu // 10
-        self.labels_right = lu % 10
+        
+        lu = lu.split(".")
+        self.labels_left = int(lu[0])
+        self.labels_right = int(lu[1])
+#         self.labels_left = lu // 10
+#         self.labels_right = lu % 10 
 
         ll = self.labels_left
         #print("labels_left", ll)
@@ -151,23 +197,15 @@ class DoubleDVSSignClassDataset(NeuromorphicDataset):
         lr = self.labels_right
         key_l = self.data_orig.keys_by_label[ll][ key // self.nl] # // nl 
         key_r = self.data_orig.keys_by_label[lr][ key % self.nl]  # % nl
-        
-        #print(self.train)
-        
-#         if self.train:
-#             if key_l > 3989:
-#                 key_l = key_l - 1000 # this is a hack, I'm not sure why it's trying to find keys outside of the scope yet
-#             if key_r > 3989:
-#                 key_r = key_r - 1000
 
         data_l, label_l =  self.data_orig[key_l] # This is a hack because for some reason it's trying to find keys outside of where it's supposed to (all train and test instead of just train for some reason)
         data_r, label_r =  self.data_orig[key_r]
 
         size_x, size_y = data_r.shape[2:4]
         data = torch.zeros(data_r.shape[:2]+(size_x*2,size_y*2))
-        np.random.seed(key%1313)
-        r1 = np.random.randint(0,size_y)
-        r2 = np.random.randint(0,size_y)
+        #np.random.seed(key%1313)
+        r1 = size_y//2 #ll #np.random.randint(0,size_y)
+        r2 = size_y//2 #lr #np.random.randint(0,size_y)
         data[:, :, :size_x, r1:r1+size_y] = data_l
         data[:, :, size_x:, r2:r2+size_y] = data_r
         target = self.label_u
@@ -233,7 +271,7 @@ def create_datasets(
     return train_ds, test_ds
 
 class ClassDVSSignDataset(torchmeta.utils.data.ClassDataset):
-    def __init__(self, root = 'data/ASL-DVS/dvssign.hdf5', chunk_size=100, meta_train=False, meta_val=False, meta_test=False, meta_split=None, transform=None, target_transform=None, download=False, class_augmentations=None):
+    def __init__(self, root = 'data/ASL-DVS/dvssign.hdf5', chunk_size=100, meta_train=False, meta_val=False, meta_test=False, meta_split='', transform=None, target_transform=None, download=False, class_augmentations=None):
         self.root=root
         self.chunk_size = chunk_size
         if meta_train is True:
@@ -258,9 +296,35 @@ class ClassDVSSignDataset(torchmeta.utils.data.ClassDataset):
                 meta_test=meta_test,
                 meta_split=meta_split,
                 class_augmentations=class_augmentations)
+        
+        if meta_split: 
+            # load the splits from file i.e. meta_split is a json file that contains the split that will be saved with the model and config file in logs
+            # importing the module
+            import json
+
+            # Opening JSON file
+            with open(meta_split) as json_file:
+                splits = json.load(json_file)
+                
+                # print for now just to make sure that it works
+                # Print the type of data variable
+                print("Type:", type(splits))
+
+                # Print the data of dictionary
+                print(f"\n{split_name}:", splits[split_name])
+        else:
+            splits = split_generator()
+            
+            import json
+            
+            # save the splits for future use
+            json = json.dumps(splits)
+            f = open("doubledvssign_splits_full.json","w")
+            f.write(json)
+            f.close()
 
 
-        self._labels = [int(s) for s in splits[split_name]]
+        self._labels = [s for s in splits[split_name]]
         self._num_classes = len(self._labels)
 
     @property
