@@ -202,12 +202,9 @@ class DoubleDVSSignClassDataset(NeuromorphicDataset):
         data_r, label_r =  self.data_orig[key_r]
 
         size_x, size_y = data_r.shape[2:4]
-        data = torch.zeros(data_r.shape[:2]+(size_x*2,size_y*2))
-        #np.random.seed(key%1313)
-        r1 = size_y//2 #ll #np.random.randint(0,size_y)
-        r2 = size_y//2 #lr #np.random.randint(0,size_y)
-        data[:, :, :size_x, r1:r1+size_y] = data_l
-        data[:, :, size_x:, r2:r2+size_y] = data_r
+        data = torch.zeros(data_r.shape[:2]+(size_x*2,size_y))
+        data[:, :, :size_x, :] = data_l
+        data[:, :, size_x:, :] = data_r
         target = self.label_u
         return data, self.target_transform(target)
 
