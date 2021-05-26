@@ -35,8 +35,6 @@ mapping = { 0 :'0',
 class NMNISTDataset(NeuromorphicDataset):
     resources_url = [['https://www.dropbox.com/sh/tg2ljlbmtzygrag/AABlMOuR15ugeOxMCX0Pvoxga/Train.zip?dl=1',None, 'Train.zip'],
                      ['https://www.dropbox.com/sh/tg2ljlbmtzygrag/AADSKgJ2CjaBWh75HnTNZyhca/Test.zip?dl=1', None, 'Test.zip']]
-    directory = '/home/kennetms/Documents/accenture-gesture-learning-v2/VAE/data/nmnist/'
-    resources_local = [directory+'Train', directory+'Test']
 
     def __init__(
             self, 
@@ -55,12 +53,12 @@ class NMNISTDataset(NeuromorphicDataset):
         self.train = train 
         self.dt = dt
         self.chunk_size = chunk_size
-
+        self.directory = root.split('n_mnist.hdf5')[0]
+        self.resources_local = [self.directory + 'Train', self.directory + 'Test']
         super(NMNISTDataset, self).__init__(
                 root,
                 transform=transform,
                 target_transform=target_transform )
-        
         with h5py.File(root, 'r', swmr=True, libver="latest") as f:
             try:
                 if train:
