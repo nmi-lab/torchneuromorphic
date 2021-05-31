@@ -225,7 +225,7 @@ class ToEventSum(object):
             idx_end += find_first(times[idx_end:], t)
             if idx_end > idx_start:
                 ee = addrs[idx_start:idx_end]
-                i_pol_x_y = tuple([i] + [ee[:, j] for j in range(ee.shape[-1])])
+                i_pol_x_y = tuple([i] + [ee[:, j] for j in range(self.ndim)])
                 np.add.at(chunks, i_pol_x_y, 1)
             idx_start = idx_end
         return chunks.sum(axis=0, keepdims=True)
