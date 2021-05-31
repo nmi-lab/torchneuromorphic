@@ -109,7 +109,7 @@ def sample(hdf5_file,
     label = dset['labels'][()]
     tbegin = dset['times'][0]
     tend = np.maximum(0,dset['times'][-1]- 2*T*1000 )
-    start_time = np.random.randint(tbegin, tend) if shuffle else 0
+    start_time = np.random.randint(tbegin, tend+1) if shuffle else 0
     #print(start_time)
     tmad = get_tmad_slice(dset['times'][()], dset['addrs'][()], start_time, T*1000)
     tmad[:,0]-=tmad[0,0]
