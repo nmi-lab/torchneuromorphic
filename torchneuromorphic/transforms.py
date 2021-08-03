@@ -209,6 +209,7 @@ class ToEventSum(object):
     def __init__(self, T=500, size=[2, 32, 32]):
         self.T = T
         self.size = size
+        self.ndim = len(size)
 
     def __call__(self, tmad):
         times = tmad[:,0]
