@@ -21,7 +21,7 @@ setup(
     author_email = "eneftci@uci.edu",
     description = ("Dataset loaders for pytorch"),
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
-    download_url='https://github.com/nmi-lab/torchneuromorphic/archive/0.3.1.tar.gz',
+    download_url='https://github.com/nmi-lab/torchneuromorphic/archive/0.3.5.tar.gz',
     long_description=long_description,
     license='Apache License 2.0',
     install_requires=[

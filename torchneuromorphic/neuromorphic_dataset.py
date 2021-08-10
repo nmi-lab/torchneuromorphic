@@ -84,7 +84,11 @@ def download_and_extract_archive(url, download_root, extract_root=None, filename
 
     archive = os.path.join(download_root, filename)
     print("Extracting {} to {}".format(archive, extract_root))
-    extract_archive(archive, extract_root, remove_finished)
+    ext = os.path.splittext(archive)[1]
+    if ext == 'hdf5' or ext == 'h5': 
+        return
+    else:
+        extract_archive(archive, extract_root, remove_finished)
 
 def identity(x):
     return x
