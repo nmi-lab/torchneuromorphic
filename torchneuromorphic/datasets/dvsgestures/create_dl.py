@@ -35,7 +35,7 @@ mapping = { 0 :'Hand Clapping'  ,
 class DVSGestureDataset(NeuromorphicDataset):
     directory = 'data/dvsgesture/'
     resources_url = [['Manually Download dataset here: https://ibm.ent.box.com/s/3hiq58ww1pbbjrinh367ykfdf60xsfm8/file/211521748942?sb=/details and place under {0}'.format(directory),None, 'DvsGesture.tar.gz']]
-    resources_local = [directory+'raw']
+    resources_local = [directory+'DvsGesture']
 
     def __init__(
             self, 
