@@ -31,7 +31,6 @@ def create_dataloader(
     high_crop = [32,32]
     size = [2, np.ceil((high_crop[0]-low_crop[0])/ds[0]).astype('int'), np.ceil((high_crop[1]-low_crop[1])/ds[1]).astype('int')]
 
-    print(size)
     default_transform = lambda chunk_size:  transforms.Compose([
          transforms.CropDims(low_crop,high_crop,[2,3]),
          transforms.Downsample(factor=[dt,1,ds[0],ds[1]]),
