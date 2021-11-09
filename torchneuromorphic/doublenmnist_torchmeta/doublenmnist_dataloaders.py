@@ -103,8 +103,11 @@ class DoubleNMNISTClassDataset(NeuromorphicDataset):
 
         size_x, size_y = data_r.shape[2:4]
         data = torch.zeros(data_r.shape[:2]+(size_x*2,size_y))
+        #print("size_x",size_x)
+        #print("size_y",size_y)
         data[:, :, :size_x, :] = data_l
-        data[:, :, size_x, :] = data_r
+        #print(data_l.shape)
+        data[:, :, size_x:, :] = data_r
         target = self.label_u
         return data, self.target_transform(target)
 
