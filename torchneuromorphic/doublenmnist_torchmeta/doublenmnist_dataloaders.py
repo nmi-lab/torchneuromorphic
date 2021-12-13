@@ -154,16 +154,12 @@ class ClassNMNISTDataset(torchmeta.utils.data.ClassDataset):
 
     def __getitem__(self, index):
         label = self._labels[index]
-<<<<<<< HEAD
-        d = DoubleNMNISTClassDataset(root =self.root, train= self.meta_train, label_u = label, transform = self.transform, target_transform = None, chunk_size = self.chunk_size)
-=======
         d = DoubleNMNISTClassDataset(root =self.root, 
                                      train= self.meta_train, 
                                      label_u = label, 
                                      transform = self.transform, 
                                      target_transform = self.target_transform, 
                                      chunk_size = self.chunk_size)
->>>>>>> upstream/master
         d.index = index
         #d.target_transform_append = lambda x: None
         return d
