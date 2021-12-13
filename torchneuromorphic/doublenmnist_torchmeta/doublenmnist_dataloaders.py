@@ -103,12 +103,10 @@ class DoubleNMNISTClassDataset(NeuromorphicDataset):
 
         size_x, size_y = data_r.shape[2:4]
         data = torch.zeros(data_r.shape[:2]+(size_x*2,size_y))
-        #print("size_x",size_x)
-        #print("size_y",size_y)
         data[:, :, :size_x, :] = data_l
-        #print(data_l.shape)
         data[:, :, size_x:, :] = data_r
         target = self.label_u
+        #Note that data is already transformed in the base dataset class (data_orig)
         return data, self.target_transform(target)
 
 
@@ -132,6 +130,7 @@ class ClassNMNISTDataset(torchmeta.utils.data.ClassDataset):
         self.split_name = split_name
 
         self.transform = transform
+        self.target_transform = target_transform
 
 
         super(ClassNMNISTDataset, self).__init__(
@@ -155,7 +154,16 @@ class ClassNMNISTDataset(torchmeta.utils.data.ClassDataset):
 
     def __getitem__(self, index):
         label = self._labels[index]
+<<<<<<< HEAD
         d = DoubleNMNISTClassDataset(root =self.root, train= self.meta_train, label_u = label, transform = self.transform, target_transform = None, chunk_size = self.chunk_size)
+=======
+        d = DoubleNMNISTClassDataset(root =self.root, 
+                                     train= self.meta_train, 
+                                     label_u = label, 
+                                     transform = self.transform, 
+                                     target_transform = self.target_transform, 
+                                     chunk_size = self.chunk_size)
+>>>>>>> upstream/master
         d.index = index
         #d.target_transform_append = lambda x: None
         return d
@@ -174,13 +182,16 @@ class DoubleNMNIST(torchmeta.utils.data.CombinationMetaDataset):
                  transform=None, target_transform=None, dataset_transform=None,
                  class_augmentations=None, download=False,chunk_size=300):
 
-        target_transform = Categorical(num_classes_per_task)
+        if target_transform is None:
+            target_tranform = Categorical(num_classes_per_task)
+            
         dataset = ClassNMNISTDataset(root,
             meta_train=meta_train, meta_val=meta_val,
             meta_test=meta_test, meta_split=meta_split, transform=transform,
-            class_augmentations=class_augmentations, download=download,chunk_size=300)
+            class_augmentations=class_augmentations, download=download,chunk_size=chunk_size)
 
-        super(DoubleNMNIST, self).__init__(dataset, num_classes_per_task,
-            target_transform=target_transform,
-            dataset_transform=dataset_transform)
+        super(DoubleNMNIST, self).__init__(dataset, 
+                                           num_classes_per_task,
+                                           target_transform=target_transform,
+                                           dataset_transform=dataset_transform)
 

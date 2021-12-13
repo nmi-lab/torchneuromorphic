@@ -12,6 +12,7 @@
 import numpy as np
 import pandas as pd
 import torch, bisect
+import warnings
 from torchvision.transforms import Compose,ToTensor,Normalize,Lambda
 
 def find_first(a, tgt):
@@ -52,7 +53,9 @@ class Jitter(object):
                 jittered[:,:,:,xnew,ynew] = data[:,:,:,x,y]
         return jittered
         
-    
+def shuffle_along_axis(a, axis):
+    idx = np.random.rand(*a.shape).argsort(axis=axis)
+    return np.take_along_axis(a,idx,axis=axis)
 
 class toOneHot(object):
     def __init__(self, num_classes):
@@ -62,6 +65,13 @@ class toOneHot(object):
         y_onehot = torch.FloatTensor(integers.shape[0], self.num_classes)
         y_onehot.zero_()
         return y_onehot.scatter_(1, torch.LongTensor(integers), 1)
+
+class toDtype(object):
+    def __init__(self, dtype):
+        self.dtype = dtype
+
+    def __call__(self, integers):
+        return torch.tensor(integers, dtype=self.dtype)
 
 class Downsample(object):
     """Resize the address event Tensor to the given size.
@@ -79,19 +89,41 @@ class Downsample(object):
     def __repr__(self):
         return self.__class__.__name__ + '(dt = {0}, dp = {1}, dx = {2}, dy = {3})'
 
-class Crop(object):
-    def __init__(self, low_crop, high_crop):
-        '''
-        Crop all dimensions
-        '''
-        self.low = low_crop
-        self.high = high_crop
+#class Crop(object):
+#    def __init__(self, low_crop, high_crop):
+#        '''
+#        Crop all dimensions
+#        '''
+#        self.low = low_crop
+#        self.high = high_crop
+#
+#    def __call__(self, tmad):
+#        idx = np.where(np.any(tmad>high_crop, axis=1))
+#        tmad = np.delete(tmad,idx,0)
+#        idx = np.where(np.any(tmad<high_crop, axis=1))
+#        tmad = np.delete(tmad,idx,0)
+#        return tmad
+#
+#    def __repr__(self):
+#        return self.__class__.__name__ + '()'
+
+class ShuffleMask(object):
+    '''
+    Shuffles events within t_min and t_max with a Random spike train having the same number of events
+    '''
+    def __init__(self, t_min, t_max, size=[2,32,32]):
+        from decolle.snn_utils import spiketrains
+        self.generator = spiketrains
+        self.t_min = t_min
+        self.t_max = t_max
+        self.size = size
 
     def __call__(self, tmad):
-        idx = np.where(np.any(tmad>self.high, axis=1))
-        tmad = np.delete(tmad,idx,0)
-        idx = np.where(np.any(tmad<self.low, axis=1))
-        tmad = np.delete(tmad,idx,0)
+        idx = np.where((tmad[:,0]>=self.t_min) * (tmad[:,0]<self.t_max))
+        for i in range(1,tmad.shape[1]):
+            #tmad[idx,i] = shuffle_along_axis(tmad[idx,i][0],0)
+            tmad[idx,i] = np.random.randint(low=0,high=self.size[i-1],size=len(idx[0]))
+
         return tmad
 
     def __repr__(self):
@@ -179,6 +211,7 @@ class ToCountFrame(object):
     def __init__(self, T=500, size=[2, 32, 32]):
         self.T = T
         self.size = size
+        self.ndim = len(size)
 
     def __call__(self, tmad):
         times = tmad[:,0]
@@ -194,7 +227,7 @@ class ToCountFrame(object):
             idx_end += find_first(times[idx_end:], t+1)
             if idx_end > idx_start:
                 ee = addrs[idx_start:idx_end]
-                i_pol_x_y = (i, ee[:, 0], ee[:, 1], ee[:, 2])
+                i_pol_x_y = tuple([i] + [ee[:, j] for j in range(self.ndim)])
                 np.add.at(chunks, i_pol_x_y, 1)
             idx_start = idx_end
         return chunks
@@ -212,6 +245,7 @@ class ToEventSum(object):
         self.T = T
         self.size = size
         self.bins = bins
+        self.ndim = len(size)
 
     def __call__(self, tmad):
         times = tmad[:,0]
@@ -230,8 +264,10 @@ class ToEventSum(object):
             idx_end += find_first(times[idx_end:], t)
             if idx_end > idx_start:
                 ee = addrs[idx_start:idx_end]
-                i_pol_x_y = (i-(self.T//self.bins)*j, ee[:, 0], ee[:, 1], ee[:, 2])
-                np.add.at(chunks[j], i_pol_x_y, 1)
+                # i_pol_x_y = (i-(self.T//self.bins)*j, ee[:, 0], ee[:, 1], ee[:, 2])
+                # np.add.at(chunks[j], i_pol_x_y, 1)
+                i_pol_x_y = tuple([i] + [ee[:, j] for j in range(self.ndim)])
+                np.add.at(chunks, i_pol_x_y, 1)
             idx_start = idx_end
             if (t+1)%(self.T//self.bins)==0:
                 #chunks = chunks.sum(axis=1, keepdims=False)
@@ -254,6 +290,7 @@ class FilterEvents(object):
             self.tpad = tpad
 
     def __call__(self, chunks):
+        chunks = chunks.to(self.kernel.device)
         if len(chunks.shape)==4:
             data = chunks.permute([1,0,2,3])
             data = data.unsqueeze(0)

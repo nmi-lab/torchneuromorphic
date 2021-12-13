@@ -55,12 +55,12 @@ class NMNISTDataset(NeuromorphicDataset):
         self.train = train 
         self.dt = dt
         self.chunk_size = chunk_size
-
+        self.directory = root.split('n_mnist.hdf5')[0]
+        self.resources_local = [self.directory + 'Train', self.directory + 'Test']
         super(NMNISTDataset, self).__init__(
                 root,
                 transform=transform,
                 target_transform=target_transform )
-        
         with h5py.File(root, 'r', swmr=True, libver="latest") as f:
             try:
                 if train:

@@ -16,7 +16,11 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name = "torchneuromorphic",
+<<<<<<< HEAD
     version = "0.3.4",
+=======
+    version = "0.3.5",
+>>>>>>> upstream/master
     author = "Emre Neftci",
     author_email = "eneftci@uci.edu",
     description = ("Dataset loaders for pytorch"),
@@ -30,5 +34,6 @@ setup(
         "scipy>=1.0",
         "h5py",
         "pandas",
+        "dv",
     ]
 )
