@@ -179,7 +179,7 @@ def create_dataloader(
                                train=False,
                                chunk_size = chunk_size_test,
                                return_meta = return_meta,
-                               time_shuffle=time_shuffle) # WAS FALSE
+                               time_shuffle=False) # WAS FALSE
 
     test_dl = torch.utils.data.DataLoader(test_d, batch_size=batch_size, **dl_kwargs)
 
