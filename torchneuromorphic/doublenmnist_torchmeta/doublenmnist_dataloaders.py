@@ -22,6 +22,8 @@ import os
 import torchmeta
 from torchmeta.transforms import Categorical
 
+import pdb
+
 mapping = { 0 :'0',
             1 :'1',
             2 :'2',
@@ -104,7 +106,7 @@ class DoubleNMNISTClassDataset(NeuromorphicDataset):
         size_x, size_y = data_r.shape[2:4]
         data = torch.zeros(data_r.shape[:2]+(size_x*2,size_y))
         data[:, :, :size_x, :] = data_l
-        data[:, :, size_x, :] = data_r
+        data[:, :, size_x:, :] = data_r
         target = self.label_u
         return data, self.target_transform(target)
 
