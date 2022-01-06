@@ -18,6 +18,41 @@ from torchvision.transforms import Compose,ToTensor,Normalize,Lambda
 def find_first(a, tgt):
     return bisect.bisect_left(a, tgt)
 
+class Jitter(object):
+    def __init__(self, xs=2,ys=2,th=30, size=[2, 32, 32]):
+        self.xs = xs
+        self.ys = ys
+        self.th = th
+        self.size = size
+        
+    def __call__(self, data):
+        if self.xs == 0 and self.ys==0 and self.th==0:
+            return data # not jittering events
+    
+        xjitter = np.random.randint(2 * self.xs) - self.xs # random jitter in x direction
+        yjitter = np.random.randint(2 * self.ys) - self.ys # random jitter in y direction
+        ajitter = (np.random.rand() - 0.5) * self.th / 180 * np.pi # amplitude? random jitter for rotation
+        sinTh = np.sin(ajitter) 
+        cosTh = np.cos(ajitter)
+
+        jittered = torch.zeros((data.shape[0],data.shape[1],self.size[0],self.size[1],self.size[2]))
+
+        for x in range(self.size[1]):
+            for y in range(self.size[2]):
+                xnew = round(x*cosTh - y*sinTh + xjitter)
+                if xnew < 0:
+                    xnew = 0
+                if xnew > self.size[1]-1:
+                    xnew=self.size[1]-1
+                ynew = round(x*sinTh + y*cosTh + yjitter)
+                if ynew < 0:
+                    ynew = 0
+                if ynew > self.size[2]-1:
+                    ynew=self.size[2]-1
+
+                jittered[:,:,:,xnew,ynew] = data[:,:,:,x,y]
+        return jittered
+        
 def shuffle_along_axis(a, axis):
     idx = np.random.rand(*a.shape).argsort(axis=axis)
     return np.take_along_axis(a,idx,axis=axis)
@@ -206,9 +241,10 @@ class ToEventSum(object):
 
     Converts a numpy.ndarray (T x H x W x C) to a torch.FloatTensor of shape (C x H x W) in the range [0., 1., ...] 
     """
-    def __init__(self, T=500, size=[2, 32, 32]):
+    def __init__(self, T=500, size=[2, 32, 32], bins=1):
         self.T = T
         self.size = size
+        self.bins = bins
         self.ndim = len(size)
 
     def __call__(self, tmad):
@@ -218,17 +254,28 @@ class ToEventSum(object):
         addrs = tmad[:,1:]
 
         ts = range(0, self.T)
-        chunks = np.zeros([len(ts)] + self.size, dtype='int8')
+        chunks = np.zeros([self.bins]+[len(ts)//self.bins] + self.size, dtype='int8')
+        #print(chunks.shape)
         idx_start = 0
         idx_end = 0
+        j = 0
         for i, t in enumerate(ts):
+            #print(t)
             idx_end += find_first(times[idx_end:], t)
             if idx_end > idx_start:
                 ee = addrs[idx_start:idx_end]
+                # i_pol_x_y = (i-(self.T//self.bins)*j, ee[:, 0], ee[:, 1], ee[:, 2])
+                # np.add.at(chunks[j], i_pol_x_y, 1)
                 i_pol_x_y = tuple([i] + [ee[:, j] for j in range(self.ndim)])
                 np.add.at(chunks, i_pol_x_y, 1)
             idx_start = idx_end
-        return chunks.sum(axis=0, keepdims=True)
+            if (t+1)%(self.T//self.bins)==0:
+                #chunks = chunks.sum(axis=1, keepdims=False)
+                j+=1
+                #print(j)
+                #print(chunks.shape)
+                
+        return chunks.sum(axis=1, keepdims=False)
 
     def __repr__(self):
         return self.__class__.__name__ + '()'

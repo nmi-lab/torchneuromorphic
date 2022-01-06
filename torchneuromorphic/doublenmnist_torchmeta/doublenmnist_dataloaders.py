@@ -191,4 +191,3 @@ class DoubleNMNIST(torchmeta.utils.data.CombinationMetaDataset):
                                            target_transform=target_transform,
                                            dataset_transform=dataset_transform)
 
-
