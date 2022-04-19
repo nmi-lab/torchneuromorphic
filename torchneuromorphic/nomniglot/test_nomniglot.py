@@ -14,7 +14,7 @@ from torchneuromorphic.utils import plot_frames_imshow
 import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
-    root = 'nomniglot.hdf5' #'/home/kennetms/Documents/snn_maml/data/nomniglot/nomniglot.hdf5'
+    root = 'nomniglot_all.hdf5' #'/home/kennetms/Documents/snn_maml/data/nomniglot/nomniglot.hdf5'
     train_dl, valid_dl, test_dl = create_dataloader(
             root=root,
             batch_size=8,
@@ -29,7 +29,7 @@ if __name__ == "__main__":
     
     # make sure can make it through all data
     for x, t in train_dl:
-        print(t)
+        print(t.shape)
         
     for x, t in valid_dl:
         print(t.shape)

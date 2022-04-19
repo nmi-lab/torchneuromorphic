@@ -168,13 +168,13 @@ def get_file_names(dataset_path, num_per_class=0):
 
     return dict_files #train, dict_validation, dict_test
 
-def create_events_hdf5(directory='', hdf5_filename=''):
+def create_events_hdf5(directory='', hdf5_filename='', num_instances=):
     
     directory = 'data/nomniglot/'
-    hdf5_filename = 'nomniglot.hdf5'
-    dict_train = get_file_names(directory+'dvs_background_1',1)
-    dict_validation = get_file_names(directory+'dvs_background_2',1)
-    dict_test = get_file_names(directory+'dvs_evaluation',1)
+    hdf5_filename = 'nomniglot_all.hdf5'
+    dict_train = get_file_names(directory+'dvs_background_1')
+    dict_validation = get_file_names(directory+'dvs_background_2')
+    dict_test = get_file_names(directory+'dvs_evaluation')
     
     print(dict_train['Alphabet_of_the_Magi'])
     
@@ -291,15 +291,15 @@ def create_events_hdf5(directory='', hdf5_filename=''):
                     
         print(len(test_keys))
         
-#         pad_token = -1
+        pad_token = -1
         
-#         train_label_list = list(zip(*itertools.zip_longest(*train_label_list, fillvalue=pad_token)))
+        train_label_list = list(zip(*itertools.zip_longest(*train_label_list, fillvalue=pad_token)))
         
-#         validation_label_list = list(zip(*itertools.zip_longest(*validation_label_list, fillvalue=pad_token)))
+        validation_label_list = list(zip(*itertools.zip_longest(*validation_label_list, fillvalue=pad_token)))
         
-#         test_label_list = list(zip(*itertools.zip_longest(*test_label_list, fillvalue=pad_token)))
+        test_label_list = list(zip(*itertools.zip_longest(*test_label_list, fillvalue=pad_token)))
         
-        #print(train_label_list)
+        print(train_label_list)
                 
         extra_grp.create_dataset('train_keys', data = train_keys)
         extra_grp.create_dataset('train_keys_by_label', data = train_label_list)

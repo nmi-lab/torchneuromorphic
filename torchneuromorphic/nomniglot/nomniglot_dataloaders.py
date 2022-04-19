@@ -175,16 +175,16 @@ class NOmniglotDataset(NeuromorphicDataset):
         
         if self.label != None:
             #print("N",self.n)
-            key = self.keys_by_label[self.label][index%self.n]#//self.n]
+            ind = self.keys_by_label[self.label][index%self.n]#//self.n]
             #print("THE KEY IS", key)
         #Important to open and close in getitem to enable num_workers>0
             with h5py.File(self.root, 'r', swmr=True, libver="latest") as f:
                 if self.train:
-                    key = f['extra']['train_keys'][key]
+                    key = f['extra']['train_keys'][ind]
                 elif self.valid:
-                    key = f['extra']['validation_keys'][key]
+                    key = f['extra']['validation_keys'][ind]
                 elif self.test:
-                    key = f['extra']['test_keys'][key]
+                    key = f['extra']['test_keys'][ind]
                 data, target = sample(
                         f,
                         key,
@@ -201,6 +201,20 @@ class NOmniglotDataset(NeuromorphicDataset):
                         f,
                         key,
                         T = self.chunk_size)
+                
+            f.close()
+                
+            if data.size==0:
+                with h5py.File(self.root, 'a', libver="latest") as f:
+                    if self.train:
+                        del f['extra']['train_keys'][index]
+                    elif self.valid:
+                        del f['extra']['validation_keys'][index]
+                    elif self.test:
+                        del f['extra']['test_keys'][index]
+                print("REMOVED BAD DATA")
+                f.close()
+                i=1/0
 
         if self.transform is not None:
             data = self.transform(data)
@@ -233,7 +247,9 @@ def sample(hdf5_file,
     start_time = dset['times'][0] #0
 
     tmad = get_tmad_slice(dset['times'][()], dset['addrs'][()], start_time, T*1000)
-    tmad[:,0]-=tmad[0,0]
+    if tmad.size!=0:
+        tmad[:,0]-=tmad[0,0]
+    
     return tmad, label
 
 
