@@ -168,13 +168,13 @@ def get_file_names(dataset_path, num_per_class=0):
 
     return dict_files #train, dict_validation, dict_test
 
-def create_events_hdf5(directory='', hdf5_filename='', num_instances=):
+def create_events_hdf5(directory='', hdf5_filename=''):#, num_instances=):
     
     directory = 'data/nomniglot/'
-    hdf5_filename = 'nomniglot_all.hdf5'
-    dict_train = get_file_names(directory+'dvs_background_1')
-    dict_validation = get_file_names(directory+'dvs_background_2')
-    dict_test = get_file_names(directory+'dvs_evaluation')
+    hdf5_filename = 'nomniglot_one.hdf5'
+    dict_train = get_file_names(directory+'dvs_background_1',1)
+    dict_validation = get_file_names(directory+'dvs_background_2',1)
+    dict_test = get_file_names(directory+'dvs_evaluation',1)
     
     print(dict_train['Alphabet_of_the_Magi'])
     
@@ -213,6 +213,7 @@ def create_events_hdf5(directory='', hdf5_filename='', num_instances=):
                     
                     print("K", k)
                     print("LABEL", label)
+                    print("KEY", key)
 
                     train_keys.append(key)
 
@@ -291,13 +292,13 @@ def create_events_hdf5(directory='', hdf5_filename='', num_instances=):
                     
         print(len(test_keys))
         
-        pad_token = -1
+#         pad_token = -1
         
-        train_label_list = list(zip(*itertools.zip_longest(*train_label_list, fillvalue=pad_token)))
+#         train_label_list = list(zip(*itertools.zip_longest(*train_label_list, fillvalue=pad_token)))
         
-        validation_label_list = list(zip(*itertools.zip_longest(*validation_label_list, fillvalue=pad_token)))
+#         validation_label_list = list(zip(*itertools.zip_longest(*validation_label_list, fillvalue=pad_token)))
         
-        test_label_list = list(zip(*itertools.zip_longest(*test_label_list, fillvalue=pad_token)))
+#         test_label_list = list(zip(*itertools.zip_longest(*test_label_list, fillvalue=pad_token)))
         
         print(train_label_list)
                 
