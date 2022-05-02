@@ -13,6 +13,7 @@ import os
 import torch
 import torch.utils.data as data
 from torchvision.datasets.utils import extract_archive, verify_str_arg, check_integrity, gen_bar_updater
+from pyunpack import Archive
 from .transforms import Compose
 
 DEFAULT_ROOT = 'data/'
@@ -84,7 +85,10 @@ def download_and_extract_archive(url, download_root, extract_root=None, filename
 
     archive = os.path.join(download_root, filename)
     print("Extracting {} to {}".format(archive, extract_root))
-    extract_archive(archive, extract_root, remove_finished)
+    if '.rar' not in archive:
+        extract_archive(archive, extract_root, remove_finished)
+    else:
+        Archive(archive).extractall(extract_root)
 
 def identity(x):
     return x
