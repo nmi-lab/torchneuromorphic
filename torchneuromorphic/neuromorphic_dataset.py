@@ -40,7 +40,7 @@ def download_url(url, root, filename=None, md5=None):
         print('Using downloaded and verified file: ' + fpath)
     else:   # download the file
         try:
-            if 'dropbox' in url:
+            if 'dropbox' in url or 'mendeley' in url:
                 # Handle dropbox links differently
                 import requests
                 headers = {'user-agent': 'Wget/1.16 (linux-gnu)'}

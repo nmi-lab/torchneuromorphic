@@ -33,8 +33,8 @@ mapping = { 0 :'0',
             9 :'9'}
 
 class NMNISTDataset(NeuromorphicDataset):
-    resources_url = [['https://www.dropbox.com/sh/tg2ljlbmtzygrag/AABlMOuR15ugeOxMCX0Pvoxga/Train.zip?dl=1',None, 'Train.zip'],
-                     ['https://www.dropbox.com/sh/tg2ljlbmtzygrag/AADSKgJ2CjaBWh75HnTNZyhca/Test.zip?dl=1', None, 'Test.zip']]
+    resources_url = [['http://data.mendeley.com/public-files/datasets/468j46mzdv/files/39c25547-014b-4137-a934-9d29fa53c7a0/file_downloaded',None, 'Train.zip'],
+                     ['http://data.mendeley.com/public-files/datasets/468j46mzdv/files/05a4d654-7e03-4c15-bdfa-9bb2bcbea494/file_downloaded', None, 'Test.zip']]
     directory = 'data/nmnist/'
     resources_local = [directory+'Train', directory+'Test']
 
