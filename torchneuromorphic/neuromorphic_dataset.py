@@ -84,7 +84,11 @@ def download_and_extract_archive(url, download_root, extract_root=None, filename
 
     archive = os.path.join(download_root, filename)
     print("Extracting {} to {}".format(archive, extract_root))
-    extract_archive(archive, extract_root, remove_finished)
+    #workaround for rar
+    if archive[-4:] != '.rar':
+        extract_archive(archive, extract_root, remove_finished)
+    else:
+        os.system('unrar x {0} {1}/'.format(archive,extract_root)+"/")
 
 def identity(x):
     return x
