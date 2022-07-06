@@ -206,7 +206,7 @@ class ToChannelHeightWidth(object):
 class ToCountFrame(object):
     """Convert Address Events to Binary tensor.
 
-    Converts a numpy.ndarray (T x H x W x C) to a torch.FloatTensor of shape (T x C x H x W) in the range [0., 1., ...]
+    Converts a numpy.ndarray (T x C x H x W) to a torch.FloatTensor of shape (T x C x H x W) in the range [0., 1., ...]
     """
     def __init__(self, T=500, size=[2, 32, 32]):
         self.T = T

@@ -134,7 +134,7 @@ def chunk_evs_pol_dvs(times, addrs, deltat=1000, chunk_size=500, size=[2, 304, 2
         idx_end += find_first(times[idx_end:], t)
         if idx_end > idx_start:
             ee = addrs[idx_start:idx_end]
-            pol, x, y = ee[:, 2], (ee[:, 0] // ds_w).astype(np.int), (ee[:, 1] // ds_h).astype(np.int)
+            pol, x, y = ee[:, 0], (ee[:, 1] // ds_w).astype(np.int), (ee[:, 2] // ds_h).astype(np.int)
             np.add.at(chunks, (i, pol, x, y), 1)
         idx_start = idx_end
     return chunks

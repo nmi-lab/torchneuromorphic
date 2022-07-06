@@ -105,36 +105,6 @@ def split_generator():
     
 
 class DoubleDVSSignClassDataset(NeuromorphicDataset):
-#     resources_url = [['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AAB0jgWqXDn3sZB_YXEjZLv4a/Yin%20Bi%20-%20a.zip?dl=0',None, 'Yin Bi - a.zip'],
-#                      ['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AAC-671H-Z7XTAQcT7GJXFsGa/Yin%20Bi%20-%20b.zip?dl=0', None, 'Yin Bi - b.zip'],
-#                      ['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AADa8hkEbpgnNbBtmRIuAw3ha/Yin%20Bi%20-%20c.zip?dl=0', None, 'Yin Bi - c.zip'],
-#                      ['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AACUrdhDl_tYnNkb8OpAJ5k4a/Yin%20Bi%20-%20d.zip?dl=0', None, 'Yin Bi - d.zip'],
-#                      ['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AABmXnWZ2hI2dPQYn3FOClnba/Yin%20Bi%20-%20e.zip?dl=0', None, 'Yin Bi - e.zip'],
-#                      ['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AAAzopIcHXTmjPuYomjAiPtfa/Yin%20Bi%20-%20f.zip?dl=0', None, 'Yin Bi - f.zip'],
-#                      ['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AAB0PMA-VwZMM1PpJXg6q4efa/Yin%20Bi%20-%20g.zip?dl=0', None, 'Yin Bi - g.zip'],
-#                      ['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AAD9-W_I4n3lTSCMgFGgJ5Dra/Yin%20Bi%20-%20h.zip?dl=0', None, 'Yin Bi - h.zip'],
-#                      ['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AADCm3yMnJcwGK70bYk-ycF0a/Yin%20Bi%20-%20i.zip?dl=0', None, 'Yin Bi - i.zip'],
-#                      ['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AAChe4QTo2DduVOVuT5hN9fxa/Yin%20Bi%20-%20k.zip?dl=0', None, 'Yin Bi - k.zip'],
-#                      ['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AAAeUazC7PHK85V6wkEub1iMa/Yin%20Bi%20-%20l.zip?dl=0', None, 'Yin Bi - l.zip'],
-#                      ['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AADrzW_ts5UxlulXaItiNuCSa/Yin%20Bi%20-%20m.zip?dl=0', None, 'Yin Bi - m.zip'],
-#                      ['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AABlYTbweHA22nA6PFujaBKFa/Yin%20Bi%20-%20n.zip?dl=0', None, 'Yin Bi - n.zip'],
-#                      ['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AABzMSVYuZ0hb5FsUoHB53xBa/Yin%20Bi%20-%20o.zip?dl=0', None, 'Yin Bi - o.zip'],
-#                      ['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AACOJ3z96KaLAMxgNLP1eOwga/Yin%20Bi%20-%20p.zip?dl=0', None, 'Yin Bi - p.zip'],
-#                      ['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AAC6B6UajjSuf6aYYOfOY3I7a/Yin%20Bi%20-%20q.zip?dl=0', None, 'Yin Bi - q.zip'],
-#                      ['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AAC-Gq6qzv0yiAnvozEozqoaa/Yin%20Bi%20-%20r.zip?dl=0', None, 'Yin Bi - r.zip'],
-#                      ['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AABDbuK8B0Mferpf0x3xbDJQa/Yin%20Bi%20-%20s.zip?dl=0', None, 'Yin Bi - s.zip'],
-#                      ['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AAAEgawjqMHuY_TvqCYNC-uIa/Yin%20Bi%20-%20t.zip?dl=0', None, 'Yin Bi - t.zip'],
-#                      ['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AABTIlScbaSqFIahMy_NRNUna/Yin%20Bi%20-%20u.zip?dl=0', None, 'Yin Bi - u.zip'],
-#                      ['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AAAp8JvzLPfhGlG5jL943W_pa/Yin%20Bi%20-%20v.zip?dl=0', None, 'Yin Bi - v.zip'],
-#                      ['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AAA4qvsatKEDeoykc2I4a6FRa/Yin%20Bi%20-%20w.zip?dl=0', None, 'Yin Bi - w.zip'],
-#                      ['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AABfnDu7rtZve1w9VVQQwuFia/Yin%20Bi%20-%20x.zip?dl=0', None, 'Yin Bi - x.zip'],
-#                      ['https://www.dropbox.com/sh/ibq0jsicatn7l6r/AADKEQBAXFQ9P0GoGHTY4ig8a/Yin%20Bi%20-%20y.zip?dl=0', None, 'Yin Bi - y.zip']
-#                     ]
-#     directory = 'data/ASL-DVS/'#'data/nmnist/'
-#     resources_local = [directory+'a', directory+'b', directory+'c', directory+'d',directory+'e',directory+'f',directory+'g',directory+'h',directory+'i',
-#                       directory+'k',directory+'l',directory+'m',directory+'n',directory+'o',directory+'p',directory+'q',directory+'r',directory+'s',
-#                       directory+'t',directory+'u',directory+'v',directory+'w',directory+'x',directory+'y',directory+'z']
-
     def __init__(
             self, 
             root : str,

@@ -1,4 +1,4 @@
-#!/bin/python
+#!/bin/python3
 #-----------------------------------------------------------------------------
 # File Name : create_hdf5.py
 # Author: Emre Neftci
@@ -71,6 +71,7 @@ def sign_get_file_names(dataset_path):
     # simple 80/20 split based on number of gestures per class on a fraction of the dataset
     num_train = 400 #3360
     num_test = 100 #840
+    cwd = os.getcwd()
     os.chdir(dataset_path+'/a')
     for key in mapping.keys():
         #if mapping[key] > 9:
@@ -108,7 +109,7 @@ def sign_get_file_names(dataset_path):
     # Crop extra samples of each digits
     #train_files = map(lambda l: l[:n_train], train_files)
     #test_files = map(lambda l: l[:n_test], test_files)
-
+    os.chdir(cwd)
     return sign_dict_train, sign_dict_test
 
 def create_events_hdf5(directory, hdf5_filename):

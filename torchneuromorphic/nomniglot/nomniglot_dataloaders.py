@@ -26,8 +26,6 @@ import pdb
 
 NUM_CLASSES = 50 # for each writing system
 
-VAL_OFFSET = 16
-TEST_OFFSET = 30
 
 train_mapping = {
     'Alphabet_of_the_Magi': 0,
@@ -87,11 +85,27 @@ test_mapping = {
     'ULOG': 49
     }
 
+def sample(hdf5_file,
+        key,
+        chunk_size = 300):
+    '''
+    
+    '''
+    dset = hdf5_file['data'][str(key)]
+    label = dset['labels'][()]
+    tend = dset['times'][-1] 
+    start_time = dset['times'][0] #0
+
+    tmad = get_tmad_slice(dset['times'][()], dset['addrs'][()], start_time, chunk_size)
+    if tmad.size!=0:
+        tmad[:,0]-=tmad[0,0]
+    
+    return tmad, label
+
 class NOmniglotDataset(NeuromorphicDataset):
     resources_url = [['https://figshare.com/ndownloader/files/31104472',None, 'dvs_background_1.rar'],
                      ['https://figshare.com/ndownloader/files/31104475', None, 'dvs_background_2.rar'],
-                     ['https://figshare.com/ndownloader/files/31104481', None, 'dvs_evaluation.rar'],
-                    ]
+                     ['https://figshare.com/ndownloader/files/31104481', None, 'dvs_evaluation.rar'],]
     directory = 'data/nomniglot/'#'data/nmnist/'
     resources_local = [directory+'dvs_background_1', directory+'dvs_background_2', directory+'dvs_evaluation']
 
@@ -110,12 +124,7 @@ class NOmniglotDataset(NeuromorphicDataset):
         self.label = label # If not None, do meta learning
         
         self.n = 0
-        if train is True:
-            self.nclasses = len(list(train_mapping.values()))
-        elif valid is True:
-            self.nclasses = len(list(validation_mapping.values()))
-        elif test is True:
-            self.nclasses = len(list(test_mapping.values()))
+
         self.download_and_create = download
         self.root = root
         self.train = train 
@@ -142,20 +151,17 @@ class NOmniglotDataset(NeuromorphicDataset):
                     self.n = f['extra'].attrs['Ntrain']
                     self.keys = f['extra']['train_keys'][()]
                     self.keys_by_label = f['extra']['train_keys_by_label'][()]
-                elif self.valid:
+                elif self.valid or self.test:
                     self.n = f['extra'].attrs['Nvalidation']
                     self.keys = f['extra']['validation_keys'][()]
                     self.keys_by_label = f['extra']['validation_keys_by_label'][()]
                     #self.keys_by_label[:,:] -= self.keys_by_label[0,0] #normalize
-                elif self.test:
-                    self.n = f['extra'].attrs['Ntest']
-                    self.keys = f['extra']['test_keys'][()]
-                    self.keys_by_label = f['extra']['test_keys_by_label'][()]
-                    #self.keys_by_label[:,:] -= self.keys_by_label[0,0] #normalize
+                self._num_classes = len(self.keys_by_label)
+
             except AttributeError:
                 print('Attribute not found in hdf5 file. You may be using an old hdf5 build. Delete {0} and run again'.format(root))
                 raise
-        
+                
         if label is not None:
             self.n = len(self.keys_by_label[self.label])
         
@@ -181,26 +187,22 @@ class NOmniglotDataset(NeuromorphicDataset):
             with h5py.File(self.root, 'r', swmr=True, libver="latest") as f:
                 if self.train:
                     key = f['extra']['train_keys'][ind]
-                elif self.valid:
+                elif self.valid or self.test:
                     key = f['extra']['validation_keys'][ind]
-                elif self.test:
-                    key = f['extra']['test_keys'][ind]
                 data, target = sample(
                         f,
                         key,
-                        T = self.chunk_size)
+                        chunk_size = self.chunk_size)
         else:
             with h5py.File(self.root, 'r', swmr=True, libver="latest") as f:
                 if self.train:
                     key = f['extra']['train_keys'][index]
-                elif self.valid:
+                elif self.valid or self.test:
                     key = f['extra']['validation_keys'][index]
-                elif self.test:
-                    key = f['extra']['test_keys'][index]
                 data, target = sample(
                         f,
                         key,
-                        T = self.chunk_size)
+                        chunk_size = self.chunk_size)
                 
             f.close()
                 
@@ -208,10 +210,8 @@ class NOmniglotDataset(NeuromorphicDataset):
                 with h5py.File(self.root, 'a', libver="latest") as f:
                     if self.train:
                         del f['extra']['train_keys'][index]
-                    elif self.valid:
+                    elif self.valid or self.test:
                         del f['extra']['validation_keys'][index]
-                    elif self.test:
-                        del f['extra']['test_keys'][index]
                 print("REMOVED BAD DATA")
                 f.close()
                 i=1/0
@@ -219,42 +219,22 @@ class NOmniglotDataset(NeuromorphicDataset):
         if self.transform is not None:
             data = self.transform(data)
 
-        # if self.target_transform is not None:
-        #     #pdb.set_trace()
-        #     print(self.target_transform)
-        #     target = self.target_transform(target)
-        #     print(target)
-        
-        # print("TRANSFORMING", self.target_transform)
-        #print(target)
-        # print(self.target_transform(target))
-        
-        if self.valid:
-            target -= VAL_OFFSET
-        if self.test:
-            target -= TEST_OFFSET
-            
-        #print("DATA SHAPE", data.shape)
-
-        return data, self.target_transform(target)
+        return data, self.target_transform(target.astype('int'))
               
-def sample(hdf5_file,
-        key,
-        T = 300):
-    dset = hdf5_file['data'][str(key)]
-    label = dset['labels'][()]
-    tend = dset['times'][-1] 
-    start_time = dset['times'][0] #0
 
-    tmad = get_tmad_slice(dset['times'][()], dset['addrs'][()], start_time, T*1000)
-    if tmad.size!=0:
-        tmad[:,0]-=tmad[0,0]
-    
-    return tmad, label
 
 
 class ClassNOmniglotDataset(torchmeta.utils.data.ClassDataset):
-    def __init__(self, root = 'data/nomniglot/nomniglot.hdf5', chunk_size=300, meta_train=False, meta_val=False, meta_test=False, meta_split=None, transform=None, target_transform=None, download=False, class_augmentations=None):
+    def __init__(self, root = 'data/nomniglot/nomniglot.hdf5',
+                 chunk_size=300,
+                 meta_train=False,
+                 meta_val=False,
+                 meta_test=False,
+                 meta_split=None,
+                 transform=None,
+                 target_transform=None,
+                 download=False,
+                 class_augmentations=None):
         
         super(ClassNOmniglotDataset, self).__init__(
                 meta_train=meta_train,
@@ -271,17 +251,14 @@ class ClassNOmniglotDataset(torchmeta.utils.data.ClassDataset):
             self.train = True
             self.valid = False
             self.test = False
-            self._labels = list(train_mapping.values())
         elif meta_val is True:
             self.train = False
             self.valid = True
             self.test = False
-            self._labels = list(validation_mapping.values())
         elif meta_test is True:
             self.train = False
             self.valid = False
             self.test = True
-            self._labels = list(test_mapping.values())
         
         if meta_train:
             split_name = 'train'
@@ -291,80 +268,30 @@ class ClassNOmniglotDataset(torchmeta.utils.data.ClassDataset):
             split_name = 'test'
         self.split_name = split_name
         
-        self._num_classes = len(self._labels)
-        
         self.transform = transform
         
-        self.chunk_size = chunk_size
+        self.chunk_size = chunk_size        
         
-        #print(self.labels)
-        
-        # with h5py.File(root, 'r', swmr=True, libver="latest") as f:
-        #     try:
-        #         if self.train:
-        #             self.n = f['extra'].attrs['Ntrain']
-        #             self.keys = f['extra']['train_keys'][()]
-        #             self.keys_by_label = f['extra']['train_keys_by_label'][()]
-        #         elif self.valid:
-        #             self.n = f['extra'].attrs['Nvalidation']
-        #             self.keys = f['extra']['validation_keys'][()]
-        #             self.keys_by_label = f['extra']['validation_keys_by_label'][()]
-        #             #self.keys_by_label[:,:] -= self.keys_by_label[0,0] #normalize
-        #         elif self.test:
-        #             self.n = f['extra'].attrs['Ntest']
-        #             self.keys = f['extra']['test_keys'][()]
-        #             self.keys_by_label = f['extra']['test_keys_by_label'][()]
-        #             #self.keys_by_label[:,:] -= self.keys_by_label[0,0] #normalize
-        #     except AttributeError:
-        #         print('Attribute not found in hdf5 file. You may be using an old hdf5 build. Delete {0} and run again'.format(root))
-        #         raise
-        
-        
-#         
-#         
-
-#         
         self.target_transform = target_transform
-
-
-#         
-
-
-#         #[int(s) for s in splits[split_name]]
-#         
         
-#         # print("LABELS", self._labels)
-#         # print("NUM CLASSES", self._num_classes)
-        
-#         self.meta_train = meta_train
-#         self.meta_valid = meta_val
-#         self.meta_test = meta_test
-        
-#         
+        self.dataset =   NOmniglotDataset(root =self.root, 
+                                     label=None,
+                                     transform = self.transform, 
+                                     target_transform = self.target_transform, 
+                                     chunk_size = self.chunk_size)
 
     @property
     def labels(self):
-        return self._labels
-    
-#     @property
-#     def data(self):
-#         if self._data is None:
-#             #self._data = h5py.File(self.split_filename, 'r')
-#         return self._data
+        return np.arange(self.n, dtype='int')
 
     @property
     def num_classes(self):
-        return self._num_classes
+        return self.dataset._num_classes
 
     def __getitem__(self, index):
-        label = self._labels[index]
+        label = index
         
         #print("label is", label)
-        
-        if self.valid:
-            label -= VAL_OFFSET
-        if self.test:
-            label -= TEST_OFFSET
         
         d = NOmniglotDataset(root =self.root, 
                                      label=label,
@@ -428,47 +355,47 @@ def create_datasets(
     if transform_train is None:
         transform_train = Compose([
             CropDims(low_crop=[0,0], high_crop=[346,260], dims=[2,3]),
-            Downsample(factor=[dt,1,1,1]),
+            Downsample(factor=[dt,1,ds,ds]),
             ToCountFrame(T = chunk_size_train, size = size),
             ToTensor()])
     if transform_valid is None:
         transform_test = Compose([
             CropDims(low_crop=[0,0], high_crop=[346,260], dims=[2,3]),
-            Downsample(factor=[dt,1,1,1]),
+            Downsample(factor=[dt,1,ds,ds]),
             ToCountFrame(T = chunk_size_test, size = size),
             ToTensor()])
     if transform_test is None:
         transform_test = Compose([
             CropDims(low_crop=[0,0], high_crop=[346,260], dims=[2,3]),
-            Downsample(factor=[dt,1,1,1]),
+            Downsample(factor=[dt,1,ds,ds]),
             ToCountFrame(T = chunk_size_test, size = size),
             ToTensor()])
         
     if target_transform_train is None:
-        target_transform_train =Compose([Repeat(chunk_size_train), toOneHot(len(list(train_mapping.values())))])
+        target_transform_train =Compose([Repeat(chunk_size_train)])
     if target_transform_valid is None:
-        target_transform_valid =Compose([Repeat(chunk_size_train), toOneHot(len(list(validation_mapping.values())))])
+        target_transform_valid = None
     if target_transform_test is None:
-        target_transform_test = Compose([Repeat(chunk_size_test), toOneHot(len(list(test_mapping.values())))])
+        target_transform_test = None
 
     train_ds = NOmniglotDataset(root,train=True,
                                  transform = transform_train, 
                                  target_transform = target_transform_train, 
-                                 chunk_size = chunk_size_train)
+                                 chunk_size = chunk_size_train*dt)
     
     valid_ds = NOmniglotDataset(root, transform = transform_test, 
                                  target_transform = target_transform_test, 
                                  train=False,
                                  valid=True,
                                  test=False,
-                                 chunk_size = chunk_size_test)
+                                 chunk_size = chunk_size_test*dt)
 
     test_ds = NOmniglotDataset(root, transform = transform_test, 
                                  target_transform = target_transform_test, 
                                  train=False,
                                  valid=False,
                                  test=True,
-                                 chunk_size = chunk_size_test)
+                                 chunk_size = chunk_size_test*dt)
 
     return train_ds, valid_ds , test_ds
 

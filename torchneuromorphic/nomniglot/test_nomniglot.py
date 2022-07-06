@@ -16,12 +16,13 @@ import matplotlib.pyplot as plt
 if __name__ == "__main__":
     root = 'nomniglot_all.hdf5' #'/home/kennetms/Documents/snn_maml/data/nomniglot/nomniglot.hdf5'
     train_dl, valid_dl, test_dl = create_dataloader(
-            root=root,
-            batch_size=8,
-            ds=1,
-            chunk_size_train = 100,
-            chunk_size_test = 100,
-            num_workers=0)
+        root=root,
+        batch_size=8,
+        ds=8,
+        dt=30000,
+        chunk_size_train = 100,
+        chunk_size_test = 100,
+        num_workers=0)
     
     iter_meta_train = iter(train_dl)
     iter_meta_valid = iter(valid_dl)
@@ -50,5 +51,5 @@ if __name__ == "__main__":
 
     print(frames_train.shape)
     print(labels_train.shape)
-    plot_frames_imshow(frames_test, labels_test, do1h=False, nim=4, avg=25)
+    plot_frames_imshow(frames_test, labels_test, do1h=False, nim=1, avg=100)
     plt.savefig('nomniglot.png')
