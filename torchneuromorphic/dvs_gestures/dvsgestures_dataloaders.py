@@ -45,10 +45,12 @@ class DVSGestureDataset(NeuromorphicDataset):
             target_transform=None,
             download_and_create=True,
             chunk_size = 500,
+            deltat = 1000,
             return_meta = False,
             time_shuffle=False):
 
         self.n = 0
+        self.deltat=deltat
         self.download_and_create = download_and_create
         self.root = root
         self.train = train 
@@ -88,6 +90,7 @@ class DVSGestureDataset(NeuromorphicDataset):
                     f,
                     key,
                     T = self.chunk_size,
+                    deltat = self.deltat,
                     shuffle=self.time_shuffle)#self.train)
 
         if self.transform is not None:
@@ -104,14 +107,15 @@ class DVSGestureDataset(NeuromorphicDataset):
 def sample(hdf5_file,
         key,
         T = 500,
+        deltat = 1000,
         shuffle = False):
     dset = hdf5_file['data'][str(key)]
     label = dset['labels'][()]
     tbegin = dset['times'][0]
-    tend = np.maximum(0,dset['times'][-1]- 2*T*1000 )
+    tend = np.maximum(0,dset['times'][-1]- 2*T*deltat )
     start_time = np.random.randint(tbegin, tend+1) if shuffle else 0
     #print(start_time)
-    tmad = get_tmad_slice(dset['times'][()], dset['addrs'][()], start_time, T*1000)
+    tmad = get_tmad_slice(dset['times'][()], dset['addrs'][()], start_time, T*deltat)
     tmad[:,0]-=tmad[0,0]
     meta = eval(dset.attrs['meta_info'])
     return tmad[:, [0,3,1,2]], label, meta['light condition'], meta['subject']
@@ -131,6 +135,7 @@ def create_dataloader(
         return_meta=False,
         sample_shuffle=True,
         time_shuffle=True,
+        channel_first = True,
         **dl_kwargs):
     if ds is None:
         ds = 4
@@ -140,18 +145,35 @@ def create_dataloader(
     size = [2, 128//ds[0], 128//ds[1]]
 
     if n_events_attention is None:
-        default_transform = lambda chunk_size: Compose([
+        if channel_first:
+            default_transform = lambda chunk_size: Compose([
             Downsample(factor=[dt,1,ds[0],ds[1]]),
             ToCountFrame(T = chunk_size, size = size),
             ToTensor()
-        ])
-    else:
-        default_transform = lambda chunk_size: Compose([
-            Downsample(factor=[dt,1,1,1]),
-            Attention(n_events_attention, size=size),
+            ])
+        else:
+            default_transform = lambda chunk_size: Compose([
+            Downsample(factor=[dt,1,ds[0],ds[1]]),
             ToCountFrame(T = chunk_size, size = size),
-            ToTensor()
-        ])
+            ToTensor(),
+            lambda x: x.permute(0,2,3,1)
+            ])
+    else:
+        if channel_first:
+            default_transform = lambda chunk_size: Compose([
+                Downsample(factor=[dt,1,1,1]),
+                Attention(n_events_attention, size=size),
+                ToCountFrame(T = chunk_size, size = size),
+                ToTensor()
+            ])
+        else:
+            default_transform = lambda chunk_size: Compose([
+                Downsample(factor=[dt,1,1,1]),
+                Attention(n_events_attention, size=size),
+                ToCountFrame(T = chunk_size, size = size),
+                ToTensor(),
+                lambda x: x.permute(0,2,3,1)
+            ])
 
     if transform_train is None:
         transform_train = default_transform(chunk_size_train)
@@ -164,10 +186,11 @@ def create_dataloader(
         target_transform_test = Compose([Repeat(chunk_size_test), toOneHot(11)])
 
     train_d = DVSGestureDataset(root,
-                                train=True,
+                                train = True,
                                 transform = transform_train, 
                                 target_transform = target_transform_train, 
                                 chunk_size = chunk_size_train,
+                                deltat = dt,
                                 return_meta = return_meta,
                                 time_shuffle=time_shuffle)
 
@@ -176,8 +199,9 @@ def create_dataloader(
     test_d = DVSGestureDataset(root,
                                transform = transform_test, 
                                target_transform = target_transform_test, 
-                               train=False,
+                               train = False,
                                chunk_size = chunk_size_test,
+                               deltat = dt,
                                return_meta = return_meta,
                                time_shuffle=time_shuffle) # WAS FALSE
 

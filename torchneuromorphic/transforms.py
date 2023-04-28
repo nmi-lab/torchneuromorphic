@@ -220,7 +220,7 @@ class ToCountFrame(object):
         addrs = tmad[:,1:]
 
         ts = range(0, self.T)
-        chunks = np.zeros([len(ts)] + self.size, dtype='int8')
+        chunks = np.zeros([len(ts)] + self.size, dtype='int16')
         idx_start = 0
         idx_end = 0
         for i, t in enumerate(ts):

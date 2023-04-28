@@ -12,7 +12,7 @@
 import os
 import torch
 import torch.utils.data as data
-from torchvision.datasets.utils import extract_archive, verify_str_arg, check_integrity, gen_bar_updater
+from torchvision.datasets.utils import extract_archive, verify_str_arg, check_integrity
 from .transforms import Compose
 
 DEFAULT_ROOT = 'data/'
@@ -55,7 +55,6 @@ def download_url(url, root, filename=None, md5=None):
                 print('Downloading ' + url + ' to ' + fpath)
                 urllib.request.urlretrieve(
                     url, fpath,
-                    reporthook=gen_bar_updater()
                 )
         except (urllib.error.URLError, IOError) as e:
             if url[:5] == 'https':
@@ -64,7 +63,6 @@ def download_url(url, root, filename=None, md5=None):
                       ' Downloading ' + url + ' to ' + fpath)
                 urllib.request.urlretrieve(
                     url, fpath,
-                    reporthook=gen_bar_updater()
                 )
             else:
                 raise e
@@ -98,7 +96,7 @@ class NeuromorphicDataset(data.Dataset):
     _repr_indent = 4
 
     def __init__(self, root=None, transforms = None, transform=None, target_transform=None):
-        if isinstance(root, torch._six.string_classes):
+        if isinstance(root, str):
             root = os.path.expanduser(root)
         self.root = root
  
