@@ -162,15 +162,17 @@ def create_dataloader(
         if channel_first:
             default_transform = lambda chunk_size: Compose([
                 Downsample(factor=[dt,1,1,1]),
-                Attention(n_events_attention, size=size),
-                ToCountFrame(T = chunk_size, size = size),
+                Attention(n_events_attention, size=[2,128//2,128//2]),
+                Downsample(factor=[1,1,ds[0],ds[1]]),
+                ToCountFrame(T = chunk_size, size = [2,128//2//ds[0],128//2//ds[1]]),
                 ToTensor()
             ])
         else:
             default_transform = lambda chunk_size: Compose([
                 Downsample(factor=[dt,1,1,1]),
-                Attention(n_events_attention, size=size),
-                ToCountFrame(T = chunk_size, size = size),
+                Attention(n_events_attention, size=[2,128//2,128//2]),
+                Downsample(factor=[1,1,ds[0],ds[1]]),
+                ToCountFrame(T = chunk_size, size = [2,128//2//ds[0],128//2//ds[1]]),
                 ToTensor(),
                 lambda x: x.permute(0,2,3,1)
             ])
