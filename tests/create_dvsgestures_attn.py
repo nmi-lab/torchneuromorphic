@@ -4,7 +4,7 @@
 # Author: Emre Neftci
 #
 # Creation Date : Fri 19 Sep 2019 
-# Last Modified : 
+# Last Modified : Fri 28 Apr 2023 02:12:31 PM CEST
 #
 # Copyright : (c) UC Regents, Emre Neftci
 # Licence : GPLv3
@@ -23,23 +23,15 @@ def create_dataloader(
         transform_test = None,
         target_transform_train = None,
         target_transform_test = None,
+        n_events_attention = 5000,
         **dl_kwargs):
     
-    n_events_attention = 100 
 
-    default_transform = lambda chunk_size:  transforms.Compose([
-         transforms.CropDims(low_crop,high_crop,[2,3]),
-         transforms.Downsample(factor=[dt,1,ds[0],ds[1]]),
-         transforms.ToCountFrame(T = chunk_size, size = size),
-         transforms.ToTensor()
-    ])
-    
-    size = [2,64,64]
     default_transform = lambda chunk_size: transforms.Compose([
             transforms.Downsample(factor=[dt,1,1,1]),
-            transforms.Attention(n_events_attention, size=size),
-            transforms.Downsample(factor=[1,1,4,4]),
-            transforms.ToCountFrame(T = chunk_size, size = [2,16,16]),
+            transforms.Attention(n_events_attention, size=[2,64,64]),
+            transforms.Downsample(factor=[1,1,2,2]),
+            transforms.ToCountFrame(T = chunk_size, size = [2,32,32]),
             transforms.ToTensor()
         ])
 
@@ -77,9 +69,10 @@ def create_dataloader(
 
 if __name__ == "__main__":
     train_dl, test_dl = create_dataloader(
+            transform_train = lambda x:x,
             batch_size=32,
             num_workers=0)
-    ho = iter(train_dl)
+    ho = iter(test_dl)
     frames, labels = next(ho)
-    plot_frames_imshow(frames, labels)
+    #plot_frames_imshow(frames, labels)
 
