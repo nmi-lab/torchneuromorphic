@@ -305,7 +305,7 @@ def create_dataloader(
         n_events_attention=None,
         return_meta=False,
         sample_shuffle=True,
-        time_shuffle=True,
+        time_shuffle=False,
         **dl_kwargs):
     
     if ds is None:
