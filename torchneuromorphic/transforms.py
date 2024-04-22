@@ -4,7 +4,7 @@
 # Author: Emre Neftci
 #
 # Creation Date : Tue Nov  5 16:26:06 2019
-# Last Modified :
+# Last Modified : Mon 22 Apr 2024 10:16:08 AM CEST
 #
 # Copyright : (c) UC Regents, Emre Neftci
 # Licence : GPLv2
@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import torch, bisect
 import warnings
+from typing import List
 from torchvision.transforms import Compose,ToTensor,Normalize,Lambda
 
 def find_first(a, tgt):
@@ -81,6 +82,9 @@ class Downsample(object):
     """
     def __init__(self, factor):
         assert isinstance(factor, int) or hasattr(factor, '__iter__')
+        if hasattr(factor, '__iter__'):
+            for f in factor:
+                assert isinstance(f, int)
         self.factor = factor
 
     def __call__(self, tmad):
@@ -370,3 +374,26 @@ class ToTensor(object):
 
     def __repr__(self):
         return self.__class__.__name__ + '(device:{0})'.format(self.device)
+
+class ToJNPTensor(object):
+    """Convert a ``numpy.ndarray`` to tensor.
+
+    Converts a numpy.ndarray to a torch.FloatTensor of the same shape
+    """
+
+    def __init__(self):
+        from jax import numpy as jnp
+        self._jaxf = jnp.array
+
+    def __call__(self, frame):
+        """
+        Args:
+            frame (numpy.ndarray): numpy array of frames
+
+        Returns:
+            Jax ND Array Tensor: Converted data.
+        """
+        return self._jaxf(frame)
+
+    def __repr__(self):
+        return self.__class__.__name__

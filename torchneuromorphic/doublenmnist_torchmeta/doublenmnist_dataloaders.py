@@ -3,7 +3,7 @@
 # Author: Emre Neftci
 #
 # Creation Date : Fri 01 Dec 2017 10:05:17 PM PST
-# Last Modified : Sun 29 Jul 2018 01:39:06 PM PDT
+# Last Modified : Mon 22 Apr 2024 12:08:57 PM CEST
 #
 # Copyright : (c)
 # Licence : Apache License, Version 2.0
@@ -45,13 +45,19 @@ class DoubleNMNISTClassDataset(NeuromorphicDataset):
             root : str,
             train : bool = True,
             transform : object = None ,
+            post_transform = lambda x: x,
             target_transform=None,
             download_and_create=True,
             chunk_size = 500,
             samples_per_class = 1,
-            label_u = 0):
+            label_u = 0,
+            dt = 1000):
 
         self.transform = transform
+        if post_transform is None:
+            self.post_transform = lambda x: x
+        else:
+            self.post_transform = post_transform
         self.target_transform = target_transform
         
         self.samples_per_class = samples_per_class
@@ -78,6 +84,7 @@ class DoubleNMNISTClassDataset(NeuromorphicDataset):
                                             target_transform=target_transform )
        
         self.data_orig = NMNISTDataset( root,
+                      dt = dt,
                       train=train,
                       transform=transform,
                       target_transform=None,
@@ -107,13 +114,13 @@ class DoubleNMNISTClassDataset(NeuromorphicDataset):
         data[:, :, size_x:, :] = data_r
         target = self.label_u
         #Note that data is already transformed in the base dataset class (data_orig)
-        return data, self.target_transform(target)
+        return self.post_transform(data), self.target_transform(target)
 
 
 
 
 class ClassNMNISTDataset(torchmeta.utils.data.ClassDataset):
-    def __init__(self, root = 'data/nmnist/n_mnist.hdf5', chunk_size=300, meta_train=False, meta_val=False, meta_test=False, meta_split=None, transform=None, target_transform=None, download=False, class_augmentations=None):
+    def __init__(self, root = 'data/nmnist/n_mnist.hdf5', dt=1000, chunk_size=300, meta_train=False, meta_val=False, meta_test=False, meta_split=None, transform=None, target_transform=None, post_transform=None, download=False, class_augmentations=None):
         self.root=root
         self.chunk_size = chunk_size
         if meta_train is True:
@@ -128,9 +135,10 @@ class ClassNMNISTDataset(torchmeta.utils.data.ClassDataset):
         if meta_test:
             split_name = 'test'
         self.split_name = split_name
-
+        self.dt = dt
         self.transform = transform
         self.target_transform = target_transform
+        self.post_transform = post_transform
 
 
         super(ClassNMNISTDataset, self).__init__(
@@ -155,9 +163,11 @@ class ClassNMNISTDataset(torchmeta.utils.data.ClassDataset):
     def __getitem__(self, index):
         label = self._labels[index]
         d = DoubleNMNISTClassDataset(root =self.root, 
+                                     dt = self.dt,
                                      train= self.meta_train, 
                                      label_u = label, 
                                      transform = self.transform, 
+                                     post_transform = self.post_transform,
                                      target_transform = self.target_transform, 
                                      chunk_size = self.chunk_size)
         d.index = index
@@ -173,17 +183,17 @@ def create_class_dataset(dset, meta_split = 'train'):
     return ds
 
 class DoubleNMNIST(torchmeta.utils.data.CombinationMetaDataset):
-    def __init__(self, root, num_classes_per_task=None, meta_train=False,
+    def __init__(self, root, num_classes_per_task=None, meta_train=False, dt=1000,
                  meta_val=False, meta_test=False, meta_split=None,
-                 transform=None, target_transform=None, dataset_transform=None,
-                 class_augmentations=None, download=False,chunk_size=300):
+                 transform=None, target_transform=None, post_transform=None, dataset_transform=None,
+                 class_augmentations=None, download=False, chunk_size=300):
 
         if target_transform is None:
             target_tranform = Categorical(num_classes_per_task)
             
-        dataset = ClassNMNISTDataset(root,
+        dataset = ClassNMNISTDataset(root, dt=dt,
             meta_train=meta_train, meta_val=meta_val,
-            meta_test=meta_test, meta_split=meta_split, transform=transform,
+            meta_test=meta_test, meta_split=meta_split, transform=transform, post_transform=post_transform,
             class_augmentations=class_augmentations, download=download,chunk_size=chunk_size)
 
         super(DoubleNMNIST, self).__init__(dataset, 
